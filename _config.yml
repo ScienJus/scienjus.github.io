@@ -1,14 +1,14 @@
 # Site
-title: ScienJus's Notes
+title: ScienJus's Blog
 subtitle: Science & Justice
-description:
+description: 程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。
 author: ScienJus
 language: zh-Hans
 timezone: 
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://blog.scienjus.com
+url: http://www.scienjus.com
 root: /
 permalink: :title/
 permalink_defaults:
@@ -60,6 +60,10 @@ pagination_dir: page
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: next
+
+plugins:
+  hexo-generate-feed
+
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
