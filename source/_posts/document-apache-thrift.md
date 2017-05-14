@@ -1,0 +1,138 @@
+---
+title: '文档化 Apache Thrift'
+date: 2017-05-14 13:03:21
+permalink: document-apache-thrift
+---
+
+在 RPC 选型中，相较于最基础的 HTTP/JSON API，基于 IDL 约束的 Thrift 在跨语言、序列化性能上占有很多优势。但是在实际使用中由于无法享受 HTTP 丰富的资源库，也带来了不少困扰，其中一个比较常见的麻烦问题就是 IDL 的共享以及协议迭代。
+
+<!--more-->
+
+# IDL 共享的问题
+
+一般在相同语言的多个项目中如何共享 IDL 呢？
+
+在我们大部分的 Java 项目中，服务提供方都会定义一个 `$project-api` 的模块，专门用来放给其他项目调用相关类，其中自然也包括了 Thrift IDL 生成后的类。我们甚至会在 `Thrift.Iface/Client` 上再包一层自己实现的 Client，使整个接口定义与 Thrift 这个实现方案彻底无关，即使未来有一天我们将通讯协议换成了其他方案（HTTP/gRPC），使用方也只需要更新一下依赖版本，而不需要改任何代码。
+
+而在多语言的项目中又该如何共享 IDL 呢？
+
+一般的 RPC 服务会存在一个 Service 和多个 Client，在我们开发的 Python 和 Java 项目中，除了 Java Client 使用 Java Service 可以用上述的方式直接共享生成后的 class 文件，其他使用方式都需要将 IDL 文件放入项目源码中，这样就会导致一份 IDL 会存在与多个项目中，而随着项目的迭代，很难做到所有项目之间的版本是相同的，混乱由此而生。而 Thrift 序列化的高效只建立在 Field Id 作为序列化索引实现的基础上，一旦 Field Id 出现了不一致，就会出现很难排查的数据丢失问题。
+
+# 解决方案
+
+面对这个问题，核心诉求就是希望 IDL 可以只存一份，并对所有项目共享（而不仅仅是通过 Java/Maven 的方式在部分语言中共享）。
+
+使用 Git 子模块是一个很简单的解决方案，但是我很难认同这种做法，大多数情况下它增加了普通项目管理的复杂度，如果目前服务的调用方都是 Java，那么我们根本不需要这种方式，而如果有一天一个新的 Python 项目需要接入了，Service 就需要把 IDL 放到一个子模块中，那么之前的那些 Java 项目要不要也跟着进行修改？其实修改是无意义的，但是不修改又会造成多个项目之间管理的不统一。
+
+另一种方式是单独使用一个仓库存放 IDL 文件，在发生变更的时候去触发所有语言的构建和包管理，例如打一个 Java 包上传到 Maven、生成一些 Python 文件放到 pip（虽然 Python 的 thriftpy 已经强大到不需要任何依赖就可以直接在运行时读取并解析 IDL 文件了）。
+
+我个人认为理想的解决方案是不在任何项目中直接引用 IDL 文件，而是引用其被托管的一个网络地址（如果你了解 Java，应该会联想到 Spring Cloud Config）。当 Java 或 Python 项目
+构建时可以选择性的去拉取变更的 IDL 文件，和上面的区别主要就是 Push 和 Pull 的区别，而且不需要为了几个文件去发一个个依赖包。
+
+比较遗憾的是：这种做法在 Gradle 中或许只是几行代码的事情，而在 Maven 中却需要额外的添加自定义插件或是去魔改 Maven Thrift Plugin，而前者依旧会增加项目的复杂度，后者的话我连这个插件的源码托管在何处都不知道。
+
+# 文档化
+
+回到问题的源头，我们究竟为什么希望所有项目中共享的 IDL 完全同步？
+
+IDL 不同步带来的最坏结果就是由序列化/反序列化无法对应导致的字段丢失或是报错，其次是可能出现服务升级后提供新的 API 无法有效地通知调用方升级。
+
+而这些在 HTTP/JSON 服务中也会出现，而且其没有任何强约束办法，只能通过 Swagger 这类文档工具进行信息同步。换言之，对于一个能够做好向后兼容的服务来说（当然这也是一个服务的最基本要求），调用方的所有更新都应该是可选的，我们只需要一个平台去展示每一个版本的 IDL 和其描述信息（文档）。
+
+# 实施
+
+## Armeria
+
+[Armeria][1] 由 Netty 作者 Trustin Lee 开发的 RPC 框架，也是我目前知道的唯一可以将 Thrift 生成文档的框架。
+
+但是由于一些坑，我们无法直接使用 Armeria 生成整套文档
+
+### Thrift Java Compiler 的坑
+
+Thrift Java Compiler 本身的有一个 Bug，当 IDL 中 Struct 没有严格按照使用顺序定义时，生成的 class 文件中的 `FieldMetaData` 是错误的。
+
+例如一个 IDL 正确的顺序应该如下：
+
+```thrift
+struct A {
+  1:i64 id;
+}
+
+struct B {
+  1:A a;
+}
+```
+
+在某些语言的 Thrift Compiler 实现中，因为 B 引用了 A，所以定义顺序必须是 A 在 B 前面（例如 thriftpy 就强制要求，否则会解析错误）。
+
+但是在 Java 中却可以将 A 定义在 B 之后，而且使用时完全没有任何问题。直到我们开始用 FieldMetaData 去生成文档。
+
+在正常顺序下生成的 B.class 当中 A 的 FieldMetaData 为：
+
+```
+tmpMap.put(B._Fields.A, new FieldMetaData("a", (byte)3, new StructMetaData((byte)12, A.class)));
+```
+
+它正确的使用了 `StructMetaData` 并引用到了 A.class，这样我们就可以找到这个字段相关的 Struct。
+
+但是如果顺序是错误的，将 A 定义在了 B 的后面，生成的 FieldMetaData 为：
+
+```
+tmpMap.put(B._Fields.A, new FieldMetaData("a", (byte)3, new FieldValueMetaData((byte)12, "A")));
+```
+
+可以看到 `StructMetaData` 变成了 `FieldValueMetaData`，并且丢失了 Class 信息。
+
+### 扩展性问题
+
+Armeria 的文档系统是建立在其基础方案之上的，这意味着如果你本身就使用其作为 RPC 框架，那么生成文档只需要额外的加一个 `DocService` 即可。并且它还能直接在文档页面中通过 [TText][2] 的协议方式直接进行在线调用。
+
+但是我目前所使用的系统并没有直接使用 Armeria，而是内部通过 Etcd 实现的 Thrift 服务注册与发现，这样使得不光没办法使用自带的在线调用功能，连生成文档界面都需要额外引入 Thrift 相关类并将空实现注册到 Armeria，整个系统能直接用到的功能非常少。
+
+## thriftpy
+
+如果你之前了解过 Swagger（一个 HTTP 文档的协议规范），你应该能明白一个良好的文档工具最重要的就是 Schema，它能够将生成程序和页面渲染程序直接解耦，方便对已有组件进行改造和复用。
+
+很幸运的是，Armeria 就拥有一套用来描述 Thrift API 的 Schema。这样我们可以不去使用它通过读取 Java class 生成 Schema 的组件，只是用将 Schema 渲染成页面的组件去渲染我们自己生成的 Schema。
+
+在与 Python 同事联调时，我发现 thriftpy 就可以帮助我生成 Schema，而且实际写下来整个代码逻辑会非常简单，一共只需要不到 100 行便可以完成。
+
+由于我本身写 Python 很少，代码看上去比较丑陋就不展示了，只是介绍下大概思路：
+
+1. 通过 `thriftpy.load` 加载 IDL 生成的模块拥有 `__thrift_meta__` 属性，可以从中获取这个 IDL 中有哪些 Struct、Service、Enum 和 Exception。
+2. 对于 Struct，通过 `thrift_spec` 可以拿到所有字段信息，这是个字典，Key 是字段 ID，Val 是一个元祖，包含字段信息。
+3. 字段信息的长度可能为 3 或是 4。是 3 的话值分别为字段类型、名称和是否必须，如果为 4 说明是 List/Set/Map，值分别为字段类型、名称、泛型和是否必须。
+4. 对于 Enum，直接通过 `_NAMES_TO_VALUES` 就可以拿到所有枚举和值之间的对应关系了。
+5. 对于 Service，需要拿到参数 `${service_name}_args` 和返回值 `${service_name}_result`，解析这两个结构基本和解析 Struct 一样。
+6. Exception 也是一种特殊的 Struct，不再详述。
+
+当然在使用中也需要魔改部分 thriftpy 的源码，比如在 [Parser][3] 中恢复对 namespace 的执行，并读取的 Java 的 namespace。因为我们在 Etcd 上注册节点就是以 namespace 为路径的，用于查看当前节点或是未来重新支持在线调试都是必不可少的。
+
+最后整个项目的目录为：
+
+```
+idl/
+-- thrift/ # 放 Thrift IDL
+-- public/ # 放 Armeria 的静态页面
+-- make_docs.py # 读取 thrift 中的文件，生成一个 JSON 文件放到 public 中
+```
+
+目前我将其托管为了一个 Gitlab Pages 项目，只要该项目由变更（多数为 IDL 修改）就会触发 Ci build 重新生成最新的文档。
+
+# 一些思考
+
+长久以来用 Thrift 积累了很多经验和疑惑，现在个人认为对于一般小公司，如果网络请求还没有成为整个 RPC 调用的性能瓶颈，使用 HTTP/JSON API 可能会更适合一些，毕竟其拥有更多的可扩展能力以及更丰富的生态环境，能够节省很多精力（例如 Java 就可以选择 Netflix 全家桶啊！）。
+
+比如说一些我曾遇到的使用场景：
+
+1. 使用分布式链路追踪时，HTTP 协议可以很简单的将 Trace 信息放入 Header 头，而 Thrift 就只能通过去魔改序列化协议达到这个功能。鉴权之类的需要统一带额外信息的场景也是如此。
+2. 错误情况的返回结果 HTTP 拥有 status code，而且 JSON 协议要更加方便，Thrift 最好是自定义 TException，但是这个受检异常在实际代码编写中又会很蛋疼。
+3. 日志，如果做通用的日志，目前只能在反序列化时进行记录，但是字段信息又是写死在 Struct 字节码里的，所以这时候打印的日志是没有字段名的。
+4. 对于 HTTP 请求，监控 200/4xx/5xx 的方案实在是太多了，但是对于 Thrift，监控成功返回、业务方自定义的 TException 和程序中自然抛出的 Runtime Exception 就要麻烦很多。
+
+~~所以虽然本文的内容是如何更好地使用 Apache Thrift，但是最终要表达的意思却是没遇到性能瓶颈之前，用 HTTP/JSON 可能会更好。~~
+
+[1]: https://github.com/line/armeria
+[2]: https://github.com/line/armeria/blob/master/thrift/src/main/java/com/linecorp/armeria/common/thrift/text/TTextProtocol.java
+
+
