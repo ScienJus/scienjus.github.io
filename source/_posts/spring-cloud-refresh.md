@@ -50,7 +50,7 @@ builder.application()
 capture = builder.run();
 ```
 
-这个应用的只是为了重新加载一遍属性源，所以只配置了 `BootstrapApplicationListener` 和 `ConfigFileApplicationListener`，最后将新加载的属性源替换掉原属性源，至此属性源本身已经完成更新了。
+这个应用只是为了重新加载一遍属性源，所以只配置了 `BootstrapApplicationListener` 和 `ConfigFileApplicationListener`，最后将新加载的属性源替换掉原属性源，至此属性源本身已经完成更新了。
 
 此时属性源虽然已经更新了，但是配置项都已经注入到了对应的 Spring Bean 中，需要重新进行绑定，所以又触发了两个操作：
 
