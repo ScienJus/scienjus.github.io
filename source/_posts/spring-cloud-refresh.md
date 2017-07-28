@@ -221,7 +221,7 @@ public void destroy() {
 
 而在清空缓存后，它还会发出一个 `RefreshScopeRefreshedEvent` 事件，在某些 Spring Cloud 的组件中会监听这个事件并作出一些反馈。
 
-### Zuul
+## Zuul
 
 Zuul 在收到这个事件后，会将自身的路由设置为 dirty 状态：
 
@@ -266,7 +266,7 @@ if (this.dirty) {
 }
 ```
 
-### Eureka
+## Eureka
 
 在 Eureka 收到该事件时，对于客户端和服务端都有不同的处理方式：
 
