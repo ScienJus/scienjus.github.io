@@ -51,7 +51,7 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 ## 原理
 
-![](uploads/15032215137843.jpg)
+![](/uploads/15032215137843.jpg)
 
 逻辑的入口是 `@EnableAutoConfiguration`，它唯一的功能就是使用了 `@Import` 作为元注解，并引入了 `EnableAutoConfigurationImportSelector` 类。
 
@@ -66,15 +66,15 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 在这个实现中，最终会调用 `SpringFactoriesLoader.loadFactoryNames` 加载配置类的类名。
 
-![](uploads/15032270247665.jpg)
+![](/uploads/15032270247665.jpg)
 
 而 `SpringFactoriesLoader.loadFactoryNames` 则会去寻找项目中所有 `META-INF/spring.factories` 文件，并将其转化为 Properties，读取注解类名对应的值作为配置类的列表返回。
 
-![](uploads/15032279356954.jpg)
+![](/uploads/15032279356954.jpg)
 
 查看 spring-boot-autoconfigure 项目，确实能发现其中包含着该文件，以及对应的配置项。
 
-![](uploads/15032279639040.jpg)
+![](/uploads/15032279639040.jpg)
  
 至此可以得出一个结论，如果想要将一个配置类变为自动装载，只需要在项目中增加 `META-INF/spring.factories` 文件，并该类的类名作为 `ENableAutoConfiguration` 的值即可。
 
@@ -96,7 +96,7 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 ## 举例
 
-![](uploads/15032299342952.jpg)
+![](/uploads/15032299342952.jpg)
 
 例如上图中初始化 Freemarker 的配置类，一共使用了 4 个条件化注解：
 
@@ -195,7 +195,7 @@ public class LogbackSentryAppenderInitializer {
 
 在这个记录中首先会把所有 AutoConfiguration 分为两组，一组为命中条件自动加载，另一组为未命中条件不进行自动加载。在这个报告中开发者可以很清晰的看到当前应用中每一个配置类因为满足/不满足某些条件最终会/不会被自动加载。
 
-![](uploads/15032348544518.jpg)
+![](/uploads/15032348544518.jpg)
 
 # 配置项映射
 
@@ -203,11 +203,11 @@ public class LogbackSentryAppenderInitializer {
 
 一般在普通的应用开发中，开发者一般会使用 `@Value` 注入配置文件中的值。而在定义配置类时，更好的做法是定义一个与配置文件映射的 Model，并通过 `@ConfigurationProperties` 进行标识。
 
-![](uploads/15032355461124.jpg)
+![](/uploads/15032355461124.jpg)
 
 而当 Configuration 装载时，可以使用 `@EnableConfigurationProperties` 将对应的配置类引入，会自动注册为 Spring Bean。
 
-![](uploads/15032355276952.jpg)
+![](/uploads/15032355276952.jpg)
 
 
 使用这种做法的好处有很多：
@@ -217,7 +217,7 @@ public class LogbackSentryAppenderInitializer {
 - 热刷新支持：在 Spring Cloud 环境下可以在应用运行中刷新绑定的配置项。
 - 配置文件提示：Spring Boot 提供了 `spring-configuration-metadata.json` 用来描述配置项，配合 IDE 可以在编写配置文件时有提示。
 
-![](uploads/15032352039035.jpg)
+![](/uploads/15032352039035.jpg)
 
 > `@Value` 实际也是支持热刷新的，但是必须定义为 `@RefreshScope`，而且实现也有不同，理论上 `@ConfigurationProperties` 的热刷新更加轻量级。
 
