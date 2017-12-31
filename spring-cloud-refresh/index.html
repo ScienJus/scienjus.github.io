@@ -1,0 +1,864 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="作为一篇源码分析的文章，本文虽然介绍 Spring Cloud 的热更新机制，但是实际全文内容都不会与 Spring Cloud Config 以及 Spring Cloud Bus 有关，因为前者只是提供了一个远端的配置源，而后者也只是提供了集群环境下的事件触发机制，与核心流程均无太大关系。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Cloud 是如何实现热更新的">
+<meta property="og:url" content="http://www.scienjus.com/spring-cloud-refresh/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="作为一篇源码分析的文章，本文虽然介绍 Spring Cloud 的热更新机制，但是实际全文内容都不会与 Spring Cloud Config 以及 Spring Cloud Bus 有关，因为前者只是提供了一个远端的配置源，而后者也只是提供了集群环境下的事件触发机制，与核心流程均无太大关系。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring Cloud 是如何实现热更新的">
+<meta name="twitter:description" content="作为一篇源码分析的文章，本文虽然介绍 Spring Cloud 的热更新机制，但是实际全文内容都不会与 Spring Cloud Config 以及 Spring Cloud Bus 有关，因为前者只是提供了一个远端的配置源，而后者也只是提供了集群环境下的事件触发机制，与核心流程均无太大关系。">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/spring-cloud-refresh/"/>
+
+
+
+
+
+  <title> Spring Cloud 是如何实现热更新的 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/spring-cloud-refresh/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring Cloud 是如何实现热更新的
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-07-25T20:12:31+08:00">
+                2017-07-25
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/spring-cloud-refresh/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="spring-cloud-refresh/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>作为一篇源码分析的文章，本文虽然介绍 Spring Cloud 的热更新机制，但是实际全文内容都不会与 Spring Cloud Config 以及 Spring Cloud Bus 有关，因为前者只是提供了一个远端的配置源，而后者也只是提供了集群环境下的事件触发机制，与核心流程均无太大关系。</p>
+<a id="more"></a>
+<h1 id="ContextRefresher"><a href="#ContextRefresher" class="headerlink" title="ContextRefresher"></a>ContextRefresher</h1><p>顾名思义，<code>ContextRefresher</code> 用于刷新 Spring 上下文，在以下场景会调用其 <code>refresh</code> 方法。</p>
+<ol>
+<li>请求 <code>/refresh</code> Endpoint。</li>
+<li>集成 Spring Cloud Bus 后，收到 <code>RefreshRemoteApplicationEvent</code> 事件（任意集成 Bus 的应用，请求 <code>/bus/refresh</code> Endpoint 后都会将事件推送到整个集群）。</li>
+</ol>
+<p>这个方法包含了整个刷新逻辑，也是本文分析的重点。</p>
+<p>首先看一下这个方法的实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public synchronized Set&lt;String&gt; refresh() &#123;</span><br><span class="line">  Map&lt;String, Object&gt; before = extract(</span><br><span class="line">      this.context.getEnvironment().getPropertySources());</span><br><span class="line">  addConfigFilesToEnvironment();</span><br><span class="line">  Set&lt;String&gt; keys = changes(before,</span><br><span class="line">      extract(this.context.getEnvironment().getPropertySources())).keySet();</span><br><span class="line">  this.context.publishEvent(new EnvironmentChangeEvent(keys));</span><br><span class="line">  this.scope.refreshAll();</span><br><span class="line">  return keys;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先是第一步 <code>extract</code>，这个方法接收了当前环境中的所有属性源（PropertySource），并将其中的非标准属性源的所有属性汇总到一个 Map 中返回。</p>
+<p>这里的标准属性源指的是 <code>StandardEnvironment</code> 和 <code>StandardServletEnvironment</code>，前者会注册系统变量（System Properties）和环境变量（System Environment），后者会注册 Servlet 环境下的 Servlet Context 和 Servlet Config 的初始参数（Init Params）和 JNDI 的属性。个人理解是因为这些属性无法改变，所以不进行刷新。</p>
+<p>第二步 <code>addConfigFilesToEnvironment</code> 是核心逻辑，它创建了一个新的 Spring Boot 应用并初始化：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">SpringApplicationBuilder builder = new SpringApplicationBuilder(Empty.class)</span><br><span class="line">    .bannerMode(Banner.Mode.OFF).web(false).environment(environment);</span><br><span class="line">// Just the listeners that affect the environment (e.g. excluding logging</span><br><span class="line">// listener because it has side effects)</span><br><span class="line">builder.application()</span><br><span class="line">    .setListeners(</span><br><span class="line">        Arrays.asList(new BootstrapApplicationListener(),</span><br><span class="line">            new ConfigFileApplicationListener()));</span><br><span class="line">capture = builder.run();</span><br></pre></td></tr></table></figure>
+<p>这个应用只是为了重新加载一遍属性源，所以只配置了 <code>BootstrapApplicationListener</code> 和 <code>ConfigFileApplicationListener</code>，最后将新加载的属性源替换掉原属性源，至此属性源本身已经完成更新了。</p>
+<p>此时属性源虽然已经更新了，但是配置项都已经注入到了对应的 Spring Bean 中，需要重新进行绑定，所以又触发了两个操作：</p>
+<ol>
+<li><p>将刷新后发生更改的 Key 收集起来，发送一个 <code>EnvironmentChangeEvent</code> 事件。</p>
+</li>
+<li><p>调用 <code>RefreshScope.refreshAll</code> 方法。</p>
+</li>
+</ol>
+<h1 id="EnvironmentChangeEvent"><a href="#EnvironmentChangeEvent" class="headerlink" title="EnvironmentChangeEvent"></a>EnvironmentChangeEvent</h1><p>在上文中，<code>ContextRefresher</code> 发布了一个 <code>EnvironmentChangeEvent</code> 事件，接下来看看这个事件产生了哪些影响。</p>
+<blockquote>
+<p>The application will listen for an EnvironmentChangeEvent and react to the change in a couple of standard ways (additional ApplicationListeners can be added as @Beans by the user in the normal way). When an EnvironmentChangeEvent is observed it will have a list of key values that have changed, and the application will use those to:</p>
+<ol>
+<li><p>Re-bind any @ConfigurationProperties beans in the context</p>
+</li>
+<li><p>Set the logger levels for any properties in logging.level.*</p>
+</li>
+</ol>
+</blockquote>
+<p>官方文档的介绍中提到，这个事件主要会触发两个行为：</p>
+<ol>
+<li>重新绑定上下文中所有使用了 <code>@ConfigurationProperties</code> 注解的 Spring Bean。</li>
+<li>如果 <code>logging.level.*</code> 配置发生了改变，重新设置日志级别。</li>
+</ol>
+<p>这两段逻辑分别可以在 <code>ConfigurationPropertiesRebinder</code> 和 <code>LoggingRebinder</code> 中看到。</p>
+<h2 id="ConfigurationPropertiesRebinder"><a href="#ConfigurationPropertiesRebinder" class="headerlink" title="ConfigurationPropertiesRebinder"></a>ConfigurationPropertiesRebinder</h2><p>这个类乍一看代码量特别少，只需要一个 <code>ConfigurationPropertiesBeans</code> 和一个 <code>ConfigurationPropertiesBindingPostProcessor</code>，然后调用 <code>rebind</code> 每个 Bean 即可。但是这两个对象是从哪里来的呢？</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public void rebind() &#123;</span><br><span class="line">  for (String name : this.beans.getBeanNames()) &#123;</span><br><span class="line">    rebind(name);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ConfigurationPropertiesBeans</code> 需要一个 <code>ConfigurationBeanFactoryMetaData</code>， 这个类逻辑很简单，它是一个 <code>BeanFactoryPostProcessor</code> 的实现，将所有的 Bean 都存在了内部的一个 Map 中。</p>
+<p>而 ConfigurationPropertiesBeans 获得这个 Map 后，会查找每一个 Bean 是否有 <code>@ConfigurationProperties</code> 注解，如果有的话就放到自己的 Map 中。</p>
+<p>绕了一圈好不容易拿到所有需要重新绑定的 Bean 后，绑定的逻辑就要简单许多了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">public boolean rebind(String name) &#123;</span><br><span class="line">  if (!this.beans.getBeanNames().contains(name)) &#123;</span><br><span class="line">    return false;</span><br><span class="line">  &#125;</span><br><span class="line">  if (this.applicationContext != null) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      Object bean = this.applicationContext.getBean(name);</span><br><span class="line">      if (AopUtils.isCglibProxy(bean)) &#123;</span><br><span class="line">        bean = getTargetObject(bean);</span><br><span class="line">      &#125;</span><br><span class="line">      this.binder.postProcessBeforeInitialization(bean, name);</span><br><span class="line">      this.applicationContext.getAutowireCapableBeanFactory()</span><br><span class="line">          .initializeBean(bean, name);</span><br><span class="line">      return true;</span><br><span class="line">    &#125;</span><br><span class="line">    catch (RuntimeException e) &#123;</span><br><span class="line">      this.errors.put(name, e);</span><br><span class="line">      throw e;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中 <code>postProcessBeforeInitialization</code> 方法将 Bean 重新绑定了所有属性，并做了校验等操作。</p>
+<p>而 <code>initializeBean</code> 的实现如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">protected Object initializeBean(final String beanName, final Object bean, RootBeanDefinition mbd) &#123;</span><br><span class="line">  Object wrappedBean = bean;</span><br><span class="line">  if(mbd == null || !mbd.isSynthetic()) &#123;</span><br><span class="line">    wrappedBean = this.applyBeanPostProcessorsBeforeInitialization(bean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  try &#123;</span><br><span class="line">    this.invokeInitMethods(beanName, wrappedBean, mbd);</span><br><span class="line">  &#125; catch (Throwable var6) &#123;</span><br><span class="line">    throw new BeanCreationException(mbd != null?mbd.getResourceDescription():null, beanName, &quot;Invocation of init method failed&quot;, var6);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  if(mbd == null || !mbd.isSynthetic()) &#123;</span><br><span class="line">    wrappedBean = this.applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  return wrappedBean;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其中主要做了三件事：</p>
+<ol>
+<li><code>applyBeanPostProcessorsBeforeInitialization</code>：调用所有 <code>BeanPostProcessor</code> 的 <code>postProcessBeforeInitialization</code> 方法。</li>
+<li><code>invokeInitMethods</code>：如果 Bean 继承了 <code>InitializingBean</code>，执行 <code>afterPropertiesSet</code> 方法，或是如果 Bean 指定了 <code>init-method</code> 属性，如果有则调用对应方法</li>
+<li><code>applyBeanPostProcessorsAfterInitialization</code>：调用所有 <code>BeanPostProcessor</code> 的 <code>postProcessAfterInitialization</code> 方法。</li>
+</ol>
+<p>之后 <code>ConfigurationPropertiesRebinder</code> 就完成整个重新绑定流程了。</p>
+<h2 id="LoggingRebinder"><a href="#LoggingRebinder" class="headerlink" title="LoggingRebinder"></a>LoggingRebinder</h2><p>相比之下 <code>LoggingRebinder</code> 的逻辑要简单许多，它只是调用了 <code>LoggingSystem</code> 的方法重新设置了日志级别，具体逻辑就不在本文详述了。</p>
+<h1 id="RefreshScope"><a href="#RefreshScope" class="headerlink" title="RefreshScope"></a>RefreshScope</h1><p>首先看看这个类的注释：</p>
+<blockquote>
+<p>Note that all beans in this scope are <em>only</em> initialized when first accessed, so the scope forces lazy initialization semantics. The implementation involves creating a proxy for every bean in the scope, so there is a flag</p>
+<p>If a bean is refreshed then the next time the bean is accessed (i.e. a method is executed) a new instance is created. All lifecycle methods are applied to the bean instances, so any destruction callbacks that were registered in the bean factory are called when it is refreshed, and then the initialization callbacks are invoked as normal when the new instance is created. A new bean instance is created from the original bean definition, so any externalized content (property placeholders or expressions in string literals) is re-evaluated when it is created.</p>
+</blockquote>
+<p>这里提到了两个重点：</p>
+<ol>
+<li>所有 <code>@RefreshScope</code> 的 Bean 都是延迟加载的，只有在第一次访问时才会初始化</li>
+<li>刷新 Bean 也是同理，下次访问时会创建一个新的对象</li>
+</ol>
+<p>再看一下方法实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public void refreshAll() &#123;</span><br><span class="line">  super.destroy();</span><br><span class="line">  this.context.publishEvent(new RefreshScopeRefreshedEvent());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个类中有一个成员变量 <code>cache</code>，用于缓存所有已经生成的 Bean，在调用 <code>get</code> 方法时尝试从缓存加载，如果没有的话就生成一个新对象放入缓存，并通过 <code>getBean</code> 初始化其对应的 Bean：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public Object get(String name, ObjectFactory&lt;?&gt; objectFactory) &#123;</span><br><span class="line">  if (this.lifecycle == null) &#123;</span><br><span class="line">    this.lifecycle = new StandardBeanLifecycleDecorator(this.proxyTargetClass);</span><br><span class="line">  &#125;</span><br><span class="line">  BeanLifecycleWrapper value = this.cache.put(name,</span><br><span class="line">      new BeanLifecycleWrapper(name, objectFactory, this.lifecycle));</span><br><span class="line">  try &#123;</span><br><span class="line">    return value.getBean();</span><br><span class="line">  &#125;</span><br><span class="line">  catch (RuntimeException e) &#123;</span><br><span class="line">    this.errors.put(name, e);</span><br><span class="line">    throw e;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>所以在销毁时只需要将整个缓存清空，下次获取对象时自然就可以重新生成新的对象，也就自然绑定了新的属性：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">public void destroy() &#123;</span><br><span class="line">  List&lt;Throwable&gt; errors = new ArrayList&lt;Throwable&gt;();</span><br><span class="line">  Collection&lt;BeanLifecycleWrapper&gt; wrappers = this.cache.clear();</span><br><span class="line">  for (BeanLifecycleWrapper wrapper : wrappers) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">      wrapper.destroy();</span><br><span class="line">    &#125;</span><br><span class="line">    catch (RuntimeException e) &#123;</span><br><span class="line">      errors.add(e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  if (!errors.isEmpty()) &#123;</span><br><span class="line">    throw wrapIfNecessary(errors.get(0));</span><br><span class="line">  &#125;</span><br><span class="line">  this.errors.clear();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>清空缓存后，下次访问对象时就会重新创建新的对象并放入缓存了。</p>
+<p>而在清空缓存后，它还会发出一个 <code>RefreshScopeRefreshedEvent</code> 事件，在某些 Spring Cloud 的组件中会监听这个事件并作出一些反馈。</p>
+<h2 id="Zuul"><a href="#Zuul" class="headerlink" title="Zuul"></a>Zuul</h2><p>Zuul 在收到这个事件后，会将自身的路由设置为 dirty 状态：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">private static class ZuulRefreshListener implements ApplicationListener&lt;ApplicationEvent&gt; &#123;</span><br><span class="line"></span><br><span class="line">  @Autowired</span><br><span class="line">  private ZuulHandlerMapping zuulHandlerMapping;</span><br><span class="line">  </span><br><span class="line">  @Override</span><br><span class="line">  public void onApplicationEvent(ApplicationEvent event) &#123;</span><br><span class="line">    if (event instanceof ContextRefreshedEvent</span><br><span class="line">        || event instanceof RefreshScopeRefreshedEvent</span><br><span class="line">        || event instanceof RoutesRefreshedEvent) &#123;</span><br><span class="line">      this.zuulHandlerMapping.setDirty(true);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>并且当路由实现为 <code>RefreshableRouteLocator</code>  时，会尝试刷新路由：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public void setDirty(boolean dirty) &#123;</span><br><span class="line">  this.dirty = dirty;</span><br><span class="line">  if (this.routeLocator instanceof RefreshableRouteLocator) &#123;</span><br><span class="line">    ((RefreshableRouteLocator) this.routeLocator).refresh();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当状态为 dirty 时，Zuul 会在下一次接受请求时重新注册路由，以更新配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">if (this.dirty) &#123;</span><br><span class="line">  synchronized (this) &#123;</span><br><span class="line">    if (this.dirty) &#123;</span><br><span class="line">      registerHandlers();</span><br><span class="line">      this.dirty = false;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Eureka"><a href="#Eureka" class="headerlink" title="Eureka"></a>Eureka</h2><p>在 Eureka 收到该事件时，对于客户端和服务端都有不同的处理方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">protected static class EurekaClientConfigurationRefresher &#123;</span><br><span class="line"></span><br><span class="line">  @Autowired(required = false)</span><br><span class="line">  private EurekaClient eurekaClient;</span><br><span class="line"></span><br><span class="line">  @Autowired(required = false)</span><br><span class="line">  private EurekaAutoServiceRegistration autoRegistration;</span><br><span class="line"></span><br><span class="line">  @EventListener(RefreshScopeRefreshedEvent.class)</span><br><span class="line">  public void onApplicationEvent(RefreshScopeRefreshedEvent event) &#123;</span><br><span class="line">    //This will force the creation of the EurkaClient bean if not already created</span><br><span class="line">    //to make sure the client will be reregistered after a refresh event</span><br><span class="line">    if(eurekaClient != null) &#123;</span><br><span class="line">      eurekaClient.getApplications();</span><br><span class="line">    &#125;</span><br><span class="line">    if (autoRegistration != null) &#123;</span><br><span class="line">      // register in case meta data changed</span><br><span class="line">      this.autoRegistration.stop();</span><br><span class="line">      this.autoRegistration.start();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于客户端来说，只是调用了下 <code>eurekaClient.getApplications</code>，理论上这个方法是没有任何效果的，但是查看上面的注释，以及联想到 <code>RefreshScope</code> 的延时初始化特性，这个方法调用应该只是为了强制初始化新的 <code>EurekaClient</code>。</p>
+<p>事实上这里很有趣的是，在 <code>EurekaClientAutoConfiguration</code> 中，实际为了 <code>EurekaClient</code> 提供了两种初始化方案，分别对应是否有 <code>RefreshScope</code>，所以以上的猜测应该是正确的。</p>
+<p>而对于服务端来说，<code>EurekaAutoServiceRegistration</code> 会将服务端先标记为下线，在进行重新上线。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>至此，Spring Cloud 的热更新流程就到此结束了，从这些源码中可以总结出以下结论：</p>
+<ol>
+<li>通过使用 <code>ContextRefresher</code> 可以进行手动的热更新，而不需要依靠 Bus 或是 Endpoint。</li>
+<li>热更新会对两类 Bean 进行配置刷新，一类是使用了 <code>@ConfigurationProperties</code> 的对象，另一类是使用了 <code>@RefreshScope</code> 的对象。</li>
+<li>这两种对象热更新的机制不同，前者在同一个对象中重新绑定了所有属性，后者则是利用了 <code>RefreshScope</code> 的缓存和延迟加载机制，生成了新的对象。</li>
+<li>通过自行监听 <code>EnvironmentChangeEvent</code> 事件，也可以获得更改的配置项，以便实现自己的热更新逻辑。</li>
+<li>在使用 Eureka 的项目中要谨慎的使用热更新，过于频繁的更新可能会使大量项目频繁的标记下线和上线，需要注意。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/api-gateway-and-netflix-zuul/" rel="next" title="聊聊 API Gateway 和 Netflix Zuul">
+                <i class="fa fa-chevron-left"></i> 聊聊 API Gateway 和 Netflix Zuul
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/spring-cloud-autoconfiguration/" rel="prev" title="Spring Cloud AutoConfiguration 简介">
+                Spring Cloud AutoConfiguration 简介 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#ContextRefresher"><span class="nav-number">1.</span> <span class="nav-text">ContextRefresher</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#EnvironmentChangeEvent"><span class="nav-number">2.</span> <span class="nav-text">EnvironmentChangeEvent</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#ConfigurationPropertiesRebinder"><span class="nav-number">2.1.</span> <span class="nav-text">ConfigurationPropertiesRebinder</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LoggingRebinder"><span class="nav-number">2.2.</span> <span class="nav-text">LoggingRebinder</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#RefreshScope"><span class="nav-number">3.</span> <span class="nav-text">RefreshScope</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Zuul"><span class="nav-number">3.1.</span> <span class="nav-text">Zuul</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Eureka"><span class="nav-number">3.2.</span> <span class="nav-text">Eureka</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#总结"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/spring-cloud-refresh/';
+          this.page.identifier = 'spring-cloud-refresh/';
+          this.page.title = 'Spring Cloud 是如何实现热更新的';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

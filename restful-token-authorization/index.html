@@ -1,0 +1,797 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="什么是 RESTREST (Representational State Transfer) 是一种软件架构风格。它将服务端的信息和功能等所有事物统称为资源，客户端的请求实际就是对资源进行操作，它的主要特点有： - 每一个资源都会对应一个独一无二的 url - 客户端通过 HTTP 的 GET、POST、PUT、DELETE 请求方法对资源进行查询、创建、修改、删除操作 - 客户端与服务端的交互必">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RESTful登录设计（基于Spring及Redis的Token鉴权）">
+<meta property="og:url" content="http://www.scienjus.com/restful-token-authorization/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="什么是 RESTREST (Representational State Transfer) 是一种软件架构风格。它将服务端的信息和功能等所有事物统称为资源，客户端的请求实际就是对资源进行操作，它的主要特点有： - 每一个资源都会对应一个独一无二的 url - 客户端通过 HTTP 的 GET、POST、PUT、DELETE 请求方法对资源进行查询、创建、修改、删除操作 - 客户端与服务端的交互必">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="RESTful登录设计（基于Spring及Redis的Token鉴权）">
+<meta name="twitter:description" content="什么是 RESTREST (Representational State Transfer) 是一种软件架构风格。它将服务端的信息和功能等所有事物统称为资源，客户端的请求实际就是对资源进行操作，它的主要特点有： - 每一个资源都会对应一个独一无二的 url - 客户端通过 HTTP 的 GET、POST、PUT、DELETE 请求方法对资源进行查询、创建、修改、删除操作 - 客户端与服务端的交互必">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/restful-token-authorization/"/>
+
+
+
+
+
+  <title> RESTful登录设计（基于Spring及Redis的Token鉴权） | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/restful-token-authorization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                RESTful登录设计（基于Spring及Redis的Token鉴权）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-08-04T06:37:42+08:00">
+                2015-08-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/restful-token-authorization/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="restful-token-authorization/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="什么是-REST"><a href="#什么是-REST" class="headerlink" title="什么是 REST"></a>什么是 REST</h3><p>REST (Representational State Transfer) 是一种软件架构风格。它将服务端的信息和功能等所有事物统称为资源，客户端的请求实际就是对资源进行操作，它的主要特点有： - 每一个资源都会对应一个独一无二的 url - 客户端通过 HTTP 的 GET、POST、PUT、DELETE 请求方法对资源进行查询、创建、修改、删除操作 - 客户端与服务端的交互必须是无状态的</p>
+<p> 关于 RESTful 的详细介绍可以参考 <a href="http://www.ruanyifeng.com/blog/2011/09/restful.html" target="_blank" rel="noopener">这篇文章</a>，在此就不浪费时间直接进入正题了。</p>
+<h3 id="使用-Token-进行身份鉴权"><a href="#使用-Token-进行身份鉴权" class="headerlink" title="使用 Token 进行身份鉴权"></a>使用 Token 进行身份鉴权</h3><p> 网站应用一般使用 Session 进行登录用户信息的存储及验证，而在移动端使用 Token 则更加普遍。它们之间并没有太大区别，Token 比较像是一个更加精简的自定义的 Session。Session 的主要功能是保持会话信息，而 Token 则只用于登录用户的身份鉴权。所以在移动端使用 Token 会比使用 Session 更加简易并且有更高的安全性，同时也更加符合 RESTful 中无状态的定义。</p>
+<h3 id="交互流程"><a href="#交互流程" class="headerlink" title="交互流程"></a>交互流程</h3><ol>
+<li>客户端通过登录请求提交用户名和密码，服务端验证通过后生成一个 Token 与该用户进行关联，并将 Token 返回给客户端。</li>
+<li>客户端在接下来的请求中都会携带 Token，服务端通过解析 Token 检查登录状态。</li>
+<li>当用户退出登录、其他终端登录同一账号（被顶号）、长时间未进行操作时 Token 会失效，这时用户需要重新登录。</li>
+</ol>
+<h3 id="程序示例"><a href="#程序示例" class="headerlink" title="程序示例"></a>程序示例</h3><p> 服务端生成的 Token 一般为随机的非重复字符串，根据应用对安全性的不同要求，会将其添加时间戳（通过时间判断 Token 是否被盗用）或 url 签名（通过请求地址判断 Token 是否被盗用）后加密进行传输。在本文中为了演示方便，仅是将 User Id 与 Token 以”\_”进行拼接。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * Token 的 Model 类，可以增加字段提高安全性，例如时间戳、url 签名</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">public class TokenModel &#123;</span><br><span class="line"></span><br><span class="line">    // 用户 id</span><br><span class="line">    private long userId;</span><br><span class="line"></span><br><span class="line">    // 随机生成的 uuid</span><br><span class="line">    private String token;</span><br><span class="line"></span><br><span class="line">    public TokenModel (long userId, String token) &#123;</span><br><span class="line">        this.userId = userId;</span><br><span class="line">        this.token = token;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public long getUserId () &#123;</span><br><span class="line">        return userId;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setUserId (long userId) &#123;</span><br><span class="line">        this.userId = userId;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public String getToken () &#123;</span><br><span class="line">        return token;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void setToken (String token) &#123;</span><br><span class="line">        this.token = token;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Redis 是一个 Key-Value 结构的内存数据库，用它维护 User Id 和 Token 的映射表会比传统数据库速度更快，这里使用 Spring-Data-Redis 封装的 TokenManager 对 Token 进行基础操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 对 token 进行操作的接口</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">public interface TokenManager &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 创建一个 token 关联上指定用户</span><br><span class="line">     * @param userId 指定用户的 id</span><br><span class="line">     * @return 生成的 token</span><br><span class="line">     */</span><br><span class="line">    public TokenModel createToken (long userId);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 检查 token 是否有效</span><br><span class="line">     * @param model token</span><br><span class="line">     * @return 是否有效</span><br><span class="line">     */</span><br><span class="line">    public boolean checkToken (TokenModel model);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 从字符串中解析 token</span><br><span class="line">     * @param authentication 加密后的字符串</span><br><span class="line">     * @return</span><br><span class="line">     */</span><br><span class="line">    public TokenModel getToken (String authentication);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 清除 token</span><br><span class="line">     * @param userId 登录用户的 id</span><br><span class="line">     */</span><br><span class="line">    public void deleteToken (long userId);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 通过 Redis 存储和验证 token 的实现类</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">@Component</span><br><span class="line">public class RedisTokenManager implements TokenManager &#123;</span><br><span class="line"></span><br><span class="line">    private RedisTemplate redis;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    public void setRedis (RedisTemplate redis) &#123;</span><br><span class="line">        this.redis = redis;</span><br><span class="line">        // 泛型设置成 Long 后必须更改对应的序列化方案</span><br><span class="line">        redis.setKeySerializer (new JdkSerializationRedisSerializer ());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TokenModel createToken (long userId) &#123;</span><br><span class="line">        // 使用 uuid 作为源 token</span><br><span class="line">        String token = UUID.randomUUID ().toString ().replace (&quot;-&quot;, &quot;&quot;);</span><br><span class="line">        TokenModel model = new TokenModel (userId, token);</span><br><span class="line">        // 存储到 redis 并设置过期时间</span><br><span class="line">        redis.boundValueOps (userId).set (token, Constants.TOKEN_EXPIRES_HOUR, TimeUnit.HOURS);</span><br><span class="line">        return model;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public TokenModel getToken (String authentication) &#123;</span><br><span class="line">        if (authentication == null || authentication.length () == 0) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        String [] param = authentication.split (&quot;_&quot;);</span><br><span class="line">        if (param.length != 2) &#123;</span><br><span class="line">            return null;</span><br><span class="line">        &#125;</span><br><span class="line">        // 使用 userId 和源 token 简单拼接成的 token，可以增加加密措施</span><br><span class="line">        long userId = Long.parseLong (param [0]);</span><br><span class="line">        String token = param [1];</span><br><span class="line">        return new TokenModel (userId, token);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public boolean checkToken (TokenModel model) &#123;</span><br><span class="line">        if (model == null) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        String token = redis.boundValueOps (model.getUserId ()).get ();</span><br><span class="line">        if (token == null || !token.equals (model.getToken ())) &#123;</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        // 如果验证成功，说明此用户进行了一次有效操作，延长 token 的过期时间</span><br><span class="line">        redis.boundValueOps (model.getUserId ()).expire (Constants.TOKEN_EXPIRES_HOUR, TimeUnit.HOURS);</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void deleteToken (long userId) &#123;</span><br><span class="line">        redis.delete (userId);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>RESTful 中所有请求的本质都是对资源进行 CRUD 操作，所以登录和退出登录也可以抽象为对一个 Token 资源的创建和删除，根据该想法创建 Controller：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 获取和删除 token 的请求地址，在 Restful 设计中其实就对应着登录和退出登录的资源映射</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/30.</span><br><span class="line"> */</span><br><span class="line">@RestController</span><br><span class="line">@RequestMapping (&quot;/tokens&quot;)</span><br><span class="line">public class TokenController &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private UserRepository userRepository;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private TokenManager tokenManager;</span><br><span class="line"></span><br><span class="line">    @RequestMapping (method = RequestMethod.POST)</span><br><span class="line">    public ResponseEntity login (@RequestParam String username, @RequestParam String password) &#123;</span><br><span class="line">        Assert.notNull (username, &quot;username can not be empty&quot;);</span><br><span class="line">        Assert.notNull (password, &quot;password can not be empty&quot;);</span><br><span class="line"></span><br><span class="line">        User user = userRepository.findByUsername (username);</span><br><span class="line">        if (user == null || // 未注册</span><br><span class="line">                !user.getPassword ().equals (password)) &#123; // 密码错误</span><br><span class="line">            // 提示用户名或密码错误</span><br><span class="line">            return new ResponseEntity (ResultModel.error (ResultStatus.USERNAME_OR_PASSWORD_ERROR), HttpStatus.NOT_FOUND);</span><br><span class="line">        &#125;</span><br><span class="line">        // 生成一个 token，保存用户登录状态</span><br><span class="line">        TokenModel model = tokenManager.createToken (user.getId ());</span><br><span class="line">        return new ResponseEntity (ResultModel.ok (model), HttpStatus.OK);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @RequestMapping (method = RequestMethod.DELETE)</span><br><span class="line">    @Authorization</span><br><span class="line">    public ResponseEntity logout (@CurrentUser User user) &#123;</span><br><span class="line">        tokenManager.deleteToken (user.getId ());</span><br><span class="line">        return new ResponseEntity (ResultModel.ok (), HttpStatus.OK);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这个 Controller 中有两个自定义的注解分别是<code>@Authorization</code>和<code>@CurrentUser</code>，其中<code>@Authorization</code>用于表示该操作需要登录后才能进行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">/**  * 在 Controller 的方法上使用此注解，该方法在映射时会检查用户是否登录，未登录返回 401 错误  * @author ScienJus  * @date 2015/7/31.  */ @Target (ElementType.METHOD) @Retention (RetentionPolicy.RUNTIME) public @interface Authorization &#123; &#125;/**</span><br><span class="line"> * 在 Controller 的方法上使用此注解，该方法在映射时会检查用户是否登录，未登录返回 401 错误</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">@Target (ElementType.METHOD)</span><br><span class="line">@Retention (RetentionPolicy.RUNTIME)</span><br><span class="line">public @interface Authorization &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这里使用 Spring 的拦截器完成这个功能，该拦截器会检查每一个请求映射的方法是否有<code>@Authorization</code>注解，并使用 TokenManager 验证 Token，如果验证失败直接返回 401 状态码（未授权）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 自定义拦截器，判断此次请求是否有权限</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/30.</span><br><span class="line"> */</span><br><span class="line">@Component</span><br><span class="line">public class AuthorizationInterceptor extends HandlerInterceptorAdapter &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private TokenManager manager;</span><br><span class="line"></span><br><span class="line">    public boolean preHandle (HttpServletRequest request,</span><br><span class="line">                             HttpServletResponse response, Object handler) throws Exception &#123;</span><br><span class="line">        // 如果不是映射到方法直接通过</span><br><span class="line">        if (!(handler instanceof HandlerMethod)) &#123;</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        HandlerMethod handlerMethod = (HandlerMethod) handler;</span><br><span class="line">        Method method = handlerMethod.getMethod ();</span><br><span class="line">        // 从 header 中得到 token</span><br><span class="line">        String authorization = request.getHeader (Constants.AUTHORIZATION);</span><br><span class="line">        // 验证 token</span><br><span class="line">        TokenModel model = manager.getToken (authorization);</span><br><span class="line">        if (manager.checkToken (model)) &#123;</span><br><span class="line">            // 如果 token 验证成功，将 token 对应的用户 id 存在 request 中，便于之后注入</span><br><span class="line">            request.setAttribute (Constants.CURRENT_USER_ID, model.getUserId ());</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        // 如果验证 token 失败，并且方法注明了 Authorization，返回 401 错误</span><br><span class="line">        if (method.getAnnotation (Authorization.class) != null) &#123;</span><br><span class="line">            response.setStatus (HttpServletResponse.SC_UNAUTHORIZED);</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>@CurrentUser</code>注解定义在方法的参数中，表示该参数是登录用户对象。这里同样使用了 Spring 的解析器完成参数注入：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 在 Controller 的方法参数中使用此注解，该方法在映射时会注入当前登录的 User 对象</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">@Target (ElementType.PARAMETER)</span><br><span class="line">@Retention (RetentionPolicy.RUNTIME)</span><br><span class="line">public @interface CurrentUser &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 增加方法注入，将含有 CurrentUser 注解的方法参数注入当前登录用户</span><br><span class="line"> * @author ScienJus</span><br><span class="line"> * @date 2015/7/31.</span><br><span class="line"> */</span><br><span class="line">@Component</span><br><span class="line">public class CurrentUserMethodArgumentResolver implements HandlerMethodArgumentResolver &#123;</span><br><span class="line"></span><br><span class="line">    @Autowired</span><br><span class="line">    private UserRepository userRepository;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean supportsParameter (MethodParameter parameter) &#123;</span><br><span class="line">        // 如果参数类型是 User 并且有 CurrentUser 注解则支持</span><br><span class="line">        if (parameter.getParameterType ().isAssignableFrom (User.class) &amp;&amp;</span><br><span class="line">                parameter.hasParameterAnnotation (CurrentUser.class)) &#123;</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Object resolveArgument (MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception &#123;</span><br><span class="line">        // 取出鉴权时存入的登录用户 Id</span><br><span class="line">        Long currentUserId = (Long) webRequest.getAttribute (Constants.CURRENT_USER_ID, RequestAttributes.SCOPE_REQUEST);</span><br><span class="line">        if (currentUserId != null) &#123;</span><br><span class="line">            // 从数据库中查询并返回</span><br><span class="line">            return userRepository.findOne (currentUserId);</span><br><span class="line">        &#125;</span><br><span class="line">        throw new MissingServletRequestPartException (Constants.CURRENT_USER_ID);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="一些细节"><a href="#一些细节" class="headerlink" title="一些细节"></a>一些细节</h3><ul>
+<li>登录请求一定要使用 HTTPS，否则无论 Token 做的安全性多好密码泄露了也是白搭</li>
+<li>Token 的生成方式有很多种，例如比较热门的有 JWT（JSON Web Tokens）、OAuth 等。</li>
+</ul>
+<h3 id="源码发布"><a href="#源码发布" class="headerlink" title="源码发布"></a>源码发布</h3><p> 本文的完整示例程序已发布在我的 <a href="https://github.com/ScienJus/spring-restful-authorization-demo" target="_blank" rel="noopener">Github</a> 上，可以下载并按照 readme.md 的流程进行操作。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/app-server-paging/" rel="next" title="APP后端分页设计">
+                <i class="fa fa-chevron-left"></i> APP后端分页设计
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/redis-use-case/" rel="prev" title="Redis应用场景">
+                Redis应用场景 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#什么是-REST"><span class="nav-number">1.</span> <span class="nav-text">什么是 REST</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用-Token-进行身份鉴权"><span class="nav-number">2.</span> <span class="nav-text">使用 Token 进行身份鉴权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#交互流程"><span class="nav-number">3.</span> <span class="nav-text">交互流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#程序示例"><span class="nav-number">4.</span> <span class="nav-text">程序示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些细节"><span class="nav-number">5.</span> <span class="nav-text">一些细节</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码发布"><span class="nav-number">6.</span> <span class="nav-text">源码发布</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/restful-token-authorization/';
+          this.page.identifier = 'restful-token-authorization/';
+          this.page.title = 'RESTful登录设计（基于Spring及Redis的Token鉴权）';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

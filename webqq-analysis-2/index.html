@@ -1,0 +1,836 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="自 2015年10月 起，Web QQ 废除了原先的用户名 / 密码登录，取而代之的是手机 QQ 扫二维码的登录方式，这也使得 GitHub 上几乎所有的相关项目都完全无法使用了。  目前版本的 Web QQ 协议，整个登录流程包含以下五步：  获取二维码 确认二维码已被扫描 获取鉴权参数ptwebqq 获取鉴权参数vfwebqq 获取鉴权参数uin和psessionid 登录的目的是获得以下五个">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web QQ协议分析（二）：登录">
+<meta property="og:url" content="http://www.scienjus.com/webqq-analysis-2/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="自 2015年10月 起，Web QQ 废除了原先的用户名 / 密码登录，取而代之的是手机 QQ 扫二维码的登录方式，这也使得 GitHub 上几乎所有的相关项目都完全无法使用了。  目前版本的 Web QQ 协议，整个登录流程包含以下五步：  获取二维码 确认二维码已被扫描 获取鉴权参数ptwebqq 获取鉴权参数vfwebqq 获取鉴权参数uin和psessionid 登录的目的是获得以下五个">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Web QQ协议分析（二）：登录">
+<meta name="twitter:description" content="自 2015年10月 起，Web QQ 废除了原先的用户名 / 密码登录，取而代之的是手机 QQ 扫二维码的登录方式，这也使得 GitHub 上几乎所有的相关项目都完全无法使用了。  目前版本的 Web QQ 协议，整个登录流程包含以下五步：  获取二维码 确认二维码已被扫描 获取鉴权参数ptwebqq 获取鉴权参数vfwebqq 获取鉴权参数uin和psessionid 登录的目的是获得以下五个">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/webqq-analysis-2/"/>
+
+
+
+
+
+  <title> Web QQ协议分析（二）：登录 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/webqq-analysis-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Web QQ协议分析（二）：登录
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-12-18T12:40:07+08:00">
+                2015-12-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/webqq-analysis-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="webqq-analysis-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>自 2015年10月 起，Web QQ 废除了原先的用户名 / 密码登录，取而代之的是手机 QQ 扫二维码的登录方式，这也使得 GitHub 上几乎所有的相关项目都完全无法使用了。</p>
+<p> 目前版本的 Web QQ 协议，整个登录流程包含以下五步：</p>
+<ol>
+<li>获取二维码</li>
+<li>确认二维码已被扫描</li>
+<li>获取鉴权参数<code>ptwebqq</code></li>
+<li>获取鉴权参数<code>vfwebqq</code></li>
+<li><p>获取鉴权参数<code>uin</code>和<code>psessionid</code></p>
+<p>登录的目的是获得以下五个参数，用于之后请求其它接口：</p>
+</li>
+</ol>
+<ul>
+<li><code>ptwebqq</code>：保存在 Cookie 中的鉴权信息</li>
+<li><code>vfwebqq</code>：类似于 Token 的鉴权信息</li>
+<li><code>psessionid</code>：类似于 SessionId 的鉴权信息</li>
+<li><code>clientid</code>：设备 id，为固定值<code>53999199</code></li>
+<li><code>uin</code>：登录用户 id（其实就是当前登录的 QQ号）</li>
+</ul>
+<h3 id="流程一：获取二维码"><a href="#流程一：获取二维码" class="headerlink" title="流程一：获取二维码"></a>流程一：获取二维码</h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>https://ssl.ptlogin2.qq.com/ptqrshow?appid=501004106&amp;e=0&amp;l=M&amp;s=5&amp;d=72&amp;v=4&amp;t=0.1</code></p>
+<p> 返回内容：二维码图片（<code>PNG</code>格式）</p>
+<h3 id="流程二：获取二维码扫描状态"><a href="#流程二：获取二维码扫描状态" class="headerlink" title="流程二：获取二维码扫描状态"></a>流程二：获取二维码扫描状态</h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>https://ssl.ptlogin2.qq.com/ptqrlogin?webqq_type=10&amp;remember_uin=1&amp;login2qq=1&amp;aid=501004106
+&amp;u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10
+&amp;ptredirect=0&amp;ptlang=2052&amp;daid=164&amp;from_ui=1&amp;pttype=1&amp;dumy=&amp;fp=loginerroralert
+&amp;action=0-0-157510&amp;mibao_css=m_webqq&amp;t=1&amp;g=1&amp;js_type=0&amp;js_ver=10143&amp;login_sig=&amp;pt_randsalt=0</code></p>
+<p>referer：<code>https://ui.ptlogin2.qq.com/cgi-bin/login?daid=164&amp;target=self&amp;style=16&amp;mibao_css=m_webqq&amp;appid=501004106&amp;enable_qlogin=0&amp;no_verifyimg=1
+&amp;s_url=http%3A%2F%2Fw.qq.com%2Fproxy.html&amp;f_url=loginerroralert
+&amp;strong_login=1&amp;login_state=10&amp;t=20131024001</code></p>
+<p> 返回内容：</p>
+<p> 扫描前（未失效）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ptuiCB (&apos;66&apos;,&apos;0&apos;,&apos;&apos;,&apos;0&apos;,&apos;二维码未失效。（3203423232）&apos;,&apos;&apos;);</span><br></pre></td></tr></table></figure>
+<p> 扫描前（已失效）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ptuiCB (&apos;65&apos;,&apos;0&apos;,&apos;&apos;,&apos;0&apos;,&apos;二维码已失效。(4012918406)&apos;, &apos;&apos;);</span><br></pre></td></tr></table></figure>
+<p> 扫描后，认证前：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ptuiCB (&apos;66&apos;,&apos;0&apos;,&apos;&apos;,&apos;0&apos;,&apos;二维码认证中。（3203423232）&apos;,&apos;&apos;);</span><br></pre></td></tr></table></figure>
+<p> 认证后：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ptuiCB (&apos;66&apos;,&apos;0&apos;,&apos;&apos;,&apos;0&apos;,&apos;http://ptlogin4.web2.qq.com/check_sig?xxxxxx&apos;,&apos;&apos;);</span><br></pre></td></tr></table></figure>
+<p> 这个请求可以直接轮训请求，直到认证成功后，将返回的地址保存下来用作下次请求。</p>
+<h3 id="流程三：获取ptwebqq"><a href="#流程三：获取ptwebqq" class="headerlink" title="流程三：获取ptwebqq"></a>流程三：获取<code>ptwebqq</code></h3><p> 请求方式：<code>Get</code></p>
+<p>url：刚才获得的地址</p>
+<p>referer：<code>http://s.web2.qq.com/proxy.html?v=20130916001&amp;callback=1&amp;id=1</code></p>
+<p> 这个请求成功后的 Http 状态码是<code>302</code>，之后需要将 Cookie 中的<code>ptwebqq</code>保存下来。</p>
+<h3 id="流程四：获取vfwebqq"><a href="#流程四：获取vfwebqq" class="headerlink" title="流程四：获取vfwebqq"></a>流程四：获取<code>vfwebqq</code></h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>http://s.web2.qq.com/api/getvfwebqq?ptwebqq=\#{ptwebqq}&amp;clientid=53999199&amp;psessionid=&amp;t=0.1</code></p>
+<p>referer：<code>http://s.web2.qq.com/proxy.html?v=20130916001&amp;callback=1&amp;id=1</code></p>
+<p>url 中需要填入上一步获取到的<code>ptwebqq</code>，请求成功后会返回一个 JSON，将<code>result.vfwebqq</code>保存下来。</p>
+<h3 id="流程五：获取psessionid和uin"><a href="#流程五：获取psessionid和uin" class="headerlink" title="流程五：获取psessionid和uin"></a>流程五：获取<code>psessionid</code>和<code>uin</code></h3><p> 请求方式：<code>Post</code></p>
+<p>url：<code>http://d1.web2.qq.com/channel/login2</code></p>
+<p>referer：<code>http://d1.web2.qq.com/proxy.html?v=20151105001&amp;callback=1&amp;id=2</code></p>
+<p> 表单数据只有一个，Key 为<code>r</code>，Value 是一个 JSON，内容为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;ptwebqq&quot;: &quot;\#&#123;ptwebqq&#125;&quot;,</span><br><span class="line">  &quot;clientid&quot;: 53999199,</span><br><span class="line">  &quot;psessionid&quot;: &quot;&quot;,</span><br><span class="line">  &quot;status&quot;: &quot;online&quot;,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 其中真正的动态参数只有<code>ptwebqq</code>，请求成功后会返回一个 JSON，将<code>result.uin</code>和<code>result.psessionid</code>保存下来。</p>
+<p> 需要注意的是，这里也返回了一个<code>result.vfwebqq</code>，但是这个值是无用的。</p>
+<p> 到此为止整个登录流程就结束了，概括一下最开始提到的五个数据：</p>
+<ul>
+<li><code>ptwebqq</code>：在流程三中通过从 Cookie 中获得</li>
+<li><code>vfwebqq</code>：在流程四中通过返回的 JSON 中获得（在流程五中也会返回一个，不要使用那个）</li>
+<li><code>uin</code>：在流程五中通过返回的 JSON 中获得（其实就是 qq号）</li>
+<li><code>psessionid</code>：在流程五中通过返回的 JSON 中获得</li>
+<li><p><code>clientid</code>：固定值为<code>53999199</code></p>
+<p>登录成功后一般可以维持 2 天左右，并且如今 Web QQ 是不会出现顶号情况的，但是多终端登录后在接收消息等接口可能会出现冲突的情况。</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/webqq-analysis-1/" rel="next" title="Web QQ协议分析（一）：前言">
+                <i class="fa fa-chevron-left"></i> Web QQ协议分析（一）：前言
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/webqq-analysis-3/" rel="prev" title="Web QQ协议分析（三）：收发消息">
+                Web QQ协议分析（三）：收发消息 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#流程一：获取二维码"><span class="nav-number">1.</span> <span class="nav-text">流程一：获取二维码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流程二：获取二维码扫描状态"><span class="nav-number">2.</span> <span class="nav-text">流程二：获取二维码扫描状态</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流程三：获取ptwebqq"><span class="nav-number">3.</span> <span class="nav-text">流程三：获取ptwebqq</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流程四：获取vfwebqq"><span class="nav-number">4.</span> <span class="nav-text">流程四：获取vfwebqq</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#流程五：获取psessionid和uin"><span class="nav-number">5.</span> <span class="nav-text">流程五：获取psessionid和uin</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/webqq-analysis-2/';
+          this.page.identifier = 'webqq-analysis-2/';
+          this.page.title = 'Web QQ协议分析（二）：登录';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

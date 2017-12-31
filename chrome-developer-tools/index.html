@@ -1,0 +1,776 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="起因是刷微博闲聊的时候发现评论的图片无法查看大图：   本来以为是网的问题，但是当时闲得无聊，就随手打开了 Chrome Developer Tools (F12)，结果发现 Network 请求的图片地址很奇怪：   本应该传一个图片 id 的地方却传了null和undefined，这说明肯定是请求之前取图片 id 失败了，查看一下 Elements 中的节点（直接在页面的对应位置右键，选择检查">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Chrome Developer Tools调试线上网站">
+<meta property="og:url" content="http://www.scienjus.com/chrome-developer-tools/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="起因是刷微博闲聊的时候发现评论的图片无法查看大图：   本来以为是网的问题，但是当时闲得无聊，就随手打开了 Chrome Developer Tools (F12)，结果发现 Network 请求的图片地址很奇怪：   本应该传一个图片 id 的地方却传了null和undefined，这说明肯定是请求之前取图片 id 失败了，查看一下 Elements 中的节点（直接在页面的对应位置右键，选择检查">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo1.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo2.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo3.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo4.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo5.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo6.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo7.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/weibo8.jpg">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用Chrome Developer Tools调试线上网站">
+<meta name="twitter:description" content="起因是刷微博闲聊的时候发现评论的图片无法查看大图：   本来以为是网的问题，但是当时闲得无聊，就随手打开了 Chrome Developer Tools (F12)，结果发现 Network 请求的图片地址很奇怪：   本应该传一个图片 id 的地方却传了null和undefined，这说明肯定是请求之前取图片 id 失败了，查看一下 Elements 中的节点（直接在页面的对应位置右键，选择检查">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2016/04/weibo1.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/chrome-developer-tools/"/>
+
+
+
+
+
+  <title> 使用Chrome Developer Tools调试线上网站 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/chrome-developer-tools/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                使用Chrome Developer Tools调试线上网站
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-02T08:44:56+08:00">
+                2016-04-02
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/chrome-developer-tools/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="chrome-developer-tools/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>起因是刷微博闲聊的时候发现评论的图片无法查看大图：</p>
+<p><img src="/uploads/2016/04/weibo1.jpg" alt="微博"></p>
+<p> 本来以为是网的问题，但是当时闲得无聊，就随手打开了 Chrome Developer Tools (F12)，结果发现 Network 请求的图片地址很奇怪：</p>
+<p><img src="/uploads/2016/04/weibo2.jpg" alt="Network"></p>
+<p> 本应该传一个图片 id 的地方却传了<code>null</code>和<code>undefined</code>，这说明肯定是请求之前取图片 id 失败了，查看一下 Elements 中的节点（直接在页面的对应位置右键，选择检查元素）：</p>
+<p><img src="/uploads/2016/04/weibo3.jpg" alt="Dom 树"></p>
+<p> 可以看到<code>action-data</code>中的<code>pid</code>确实为<code>null</code>，这就是导致请求失败的直接原因，但是这里又是怎么出错的呢？</p>
+<p> 一边观察 Elements 一边点击图片，可以发现这个元素并不是直接由服务端渲染而成的，而是通过 JS 动态加载的。那么就好说了，只需要查看一下加载的 JS 代码就可以了。</p>
+<p> 在 Elements 中右键点击这个元素，然后选择 Break on -\&gt; Subtree Modifications，这样当这个元素发生改变时，便会自动断点到正在执行的 JS 代码。</p>
+<p><img src="/uploads/2016/04/weibo4.jpg" alt="断点"></p>
+<p> 然后再次点击这个图片，触发 Dom 操作，发现断点停留在一坨被混淆和压缩的代码中。不过不要害怕，只需要点击下图左下角的<code>{}</code>按钮，JS 代码就会自动格式化了：</p>
+<p> 格式化前：</p>
+<p><img src="/uploads/2016/04/weibo5.jpg" alt="格式化前"></p>
+<p> 格式化后：</p>
+<p><img src="/uploads/2016/04/weibo6.jpg" alt="格式化后"></p>
+<p> 接下来就是很普通的断点调试了，F8 是跳到下一个断点，F10 是下一步，F11 是进入方法，F12 是跳出方法。右侧列表还有调用栈，变量值等信息：</p>
+<p><img src="/uploads/2016/04/weibo7.jpg" alt="调试"></p>
+<p> 虽然代码还是被混淆过，但已经足够排查出问题了：在下面这行代码中会通过一个正则表达式截取出图片的 id 赋值给<code>n</code>（也就是之后的<code>pid</code>）。但是由于某些原因图片链接与正则表达式并不匹配，导致没有截取到，所以最后<code>n</code>的值为<code>null</code>。</p>
+<p><img src="/uploads/2016/04/weibo8.jpg" alt="Bug"></p>
+<p> 虽然这只是一个低级的 Bug，但是也可以轻描淡写的展示出 Chrome Developer Tools 的强大功能：监测网络请求、查看和动态修改 Dom 元素、格式化 JS 代码、断点调试运行中的 JS 代码。使你能够轻松的在开小差的时候一言不合就开始 Debug【误</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/mybatis-vfs-bug/" rel="next" title="MyBatis无法扫描Spring Boot别名的Bug">
+                <i class="fa fa-chevron-left"></i> MyBatis无法扫描Spring Boot别名的Bug
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/my-restful-api-best-practices/" rel="prev" title="我所认为的RESTful API最佳实践">
+                我所认为的RESTful API最佳实践 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/chrome-developer-tools/';
+          this.page.identifier = 'chrome-developer-tools/';
+          this.page.title = '使用Chrome Developer Tools调试线上网站';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

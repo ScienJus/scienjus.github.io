@@ -1,0 +1,816 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Spring 的路由实现 在 Spring 中路由被抽象为MappingHandler接口，而最常用的实现类是处理@RequestMapping的RequestMappingHandlerMapping。 MappingHandler接口只有一个方法getHandler，该方法接受标准的HttpServletRequest并返回HandlerExecutionChain，这个对象包含一组拦截器和具">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用FastRoute重写Spring的路由">
+<meta property="og:url" content="http://www.scienjus.com/fastroute-spring/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="Spring 的路由实现 在 Spring 中路由被抽象为MappingHandler接口，而最常用的实现类是处理@RequestMapping的RequestMappingHandlerMapping。 MappingHandler接口只有一个方法getHandler，该方法接受标准的HttpServletRequest并返回HandlerExecutionChain，这个对象包含一组拦截器和具">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/route2.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/route1.jpg">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用FastRoute重写Spring的路由">
+<meta name="twitter:description" content="Spring 的路由实现 在 Spring 中路由被抽象为MappingHandler接口，而最常用的实现类是处理@RequestMapping的RequestMappingHandlerMapping。 MappingHandler接口只有一个方法getHandler，该方法接受标准的HttpServletRequest并返回HandlerExecutionChain，这个对象包含一组拦截器和具">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2016/04/route2.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/fastroute-spring/"/>
+
+
+
+
+
+  <title> 使用FastRoute重写Spring的路由 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/fastroute-spring/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                使用FastRoute重写Spring的路由
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-05T09:41:14+08:00">
+                2016-04-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/fastroute-spring/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="fastroute-spring/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="Spring-的路由实现"><a href="#Spring-的路由实现" class="headerlink" title="Spring 的路由实现"></a>Spring 的路由实现</h3><p> 在 Spring 中路由被抽象为<code>MappingHandler</code>接口，而最常用的实现类是处理<code>@RequestMapping</code>的<code>RequestMappingHandlerMapping</code>。</p>
+<p><code>MappingHandler</code>接口只有一个方法<code>getHandler</code>，该方法接受标准的<code>HttpServletRequest</code>并返回<code>HandlerExecutionChain</code>，这个对象包含一组拦截器和具体需要执行的处理器。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">HandlerExecutionChain getHandler (HttpServletRequest request) throws Exception;</span><br></pre></td></tr></table></figure>
+<p><code>AbstractHandlerMapping</code>实现了这个方法，并将其定义为<code>final</code>方法，但是事实上只是添加了一些处理逻辑，并提供了一个抽象方法<code>getHandlerInternal</code>由子类实现。</p>
+<p> 接下来，在<code>AbstractHandlerMethodMapping</code>中，这个方法被完整的实现了，最核心的业务在<code>lookupHandlerMethod</code>方法中，让我们来看一下这个方法具体是如何实现路由的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">protected HandlerMethod lookupHandlerMethod (String lookupPath, HttpServletRequest request) throws Exception &#123;</span><br><span class="line">    List matches = new ArrayList ();</span><br><span class="line">    List directPathMatches = this.mappingRegistry.getMappingsByUrl (lookupPath);</span><br><span class="line">    if (directPathMatches != null) &#123;</span><br><span class="line">        addMatchingMappings (directPathMatches, matches, request);</span><br><span class="line">    &#125;</span><br><span class="line">    if (matches.isEmpty ()) &#123;</span><br><span class="line">        // No choice but to go through all mappings...</span><br><span class="line">        addMatchingMappings (this.mappingRegistry.getMappings ().keySet (), matches, request);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    if (!matches.isEmpty ()) &#123;</span><br><span class="line">        Comparator comparator = new MatchComparator (getMappingComparator (request));</span><br><span class="line">        Collections.sort (matches, comparator);</span><br><span class="line">        if (logger.isTraceEnabled ()) &#123;</span><br><span class="line">            logger.trace (&quot;Found &quot; + matches.size () + &quot; matching mapping (s) for [&quot; +</span><br><span class="line">                    lookupPath + &quot;] : &quot; + matches);</span><br><span class="line">        &#125;</span><br><span class="line">        Match bestMatch = matches.get (0);</span><br><span class="line">        if (matches.size () &gt; 1) &#123;</span><br><span class="line">            if (CorsUtils.isPreFlightRequest (request)) &#123;</span><br><span class="line">                return PREFLIGHT_AMBIGUOUS_MATCH;</span><br><span class="line">            &#125;</span><br><span class="line">            Match secondBestMatch = matches.get (1);</span><br><span class="line">            if (comparator.compare (bestMatch, secondBestMatch) == 0) &#123;</span><br><span class="line">                Method m1 = bestMatch.handlerMethod.getMethod ();</span><br><span class="line">                Method m2 = secondBestMatch.handlerMethod.getMethod ();</span><br><span class="line">                throw new IllegalStateException (&quot;Ambiguous handler methods mapped for HTTP path &apos;&quot; +</span><br><span class="line">                        request.getRequestURL () + &quot;&apos;: &#123;&quot; + m1 + &quot;, &quot; + m2 + &quot;&#125;&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        handleMatch (bestMatch.mapping, lookupPath, request);</span><br><span class="line">        return bestMatch.handlerMethod;</span><br><span class="line">    &#125;</span><br><span class="line">    else &#123;</span><br><span class="line">        return handleNoMatch (this.mappingRegistry.getMappings ().keySet (), lookupPath, request);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 首先它会调用<code>getMappingsByUrl</code>去寻找静态路由，这个方法实际就是一个 Map，以路由地址和路由对象组成的键值对。如果<code>@RequestMapping</code>中注册的路径没有包含参数或正则（例如<code>{id}</code>或<code>/**</code>），这个方法会很快的查询到匹配的路由。</p>
+<p> 但是如果注册的路径包含了参数或正则，这个方法就会返回一个空列表，之后 Spring 会对所有的路由进行遍历，寻找匹配的路由。</p>
+<p> 匹配大致分两步：首先将路由中除了路径以外的信息进行对比，包括请求方式（HTTP Method）、参数（Param）、请求头（Header）、内容类型（Content-Type）。如果所有信息都符合才会进行比较耗时的路径匹配，Spring 默认使用的是<code>AntPathMatcher</code>而不是正则表达式匹配路径，性能上应该会比单纯使用正则表达式要更高。</p>
+<p> 最后，Spring 会将所有匹配的路由进行排序，得到匹配度最高的路由（如果有多个匹配度相同且最高的路由，会抛出异常）。接着对该路由进行解析，获得路径中的动态参数。</p>
+<p> 从这个流程中可以看出，遍历整个列表绝对是一个低效的实现方式，即使<code>AntPathMatcher</code>的性能要高于正则表达式，每次都要从头扫描 URL 却是没有必要的。</p>
+<p> 接下来介绍一种更加快速的路由匹配方式：FastRoute。</p>
+<h3 id="FastRoute-的路由实现"><a href="#FastRoute-的路由实现" class="headerlink" title="FastRoute 的路由实现"></a>FastRoute 的路由实现</h3><p> <a href="https://github.com/nikic/FastRoute" target="_blank" rel="noopener">FastRoute</a> 是 GitHub 上的一个 PHP 开源项目，并且应用于 <a href="https://github.com/laravel/lumen" target="_blank" rel="noopener">Lumen</a> 框架中。它提供了一种更加快速但是并不麻烦的路由匹配方式。</p>
+<p> 之前我们提到，Spring 这种循环整个列表进行匹配的做法并不高效，而在 FastRoute 中，它将所有的路由拼成了一个完整的正则表达式，所以只要一次正则匹配就可以完成所有路由的查询。</p>
+<p> 例如有以下三个路由：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/users/&#123;id&#125;</span><br><span class="line"></span><br><span class="line">/users/&#123;id&#125;/&#123;name&#125;</span><br><span class="line"></span><br><span class="line">/users/&#123;uid&#125;/posts/&#123;pid&#125;</span><br></pre></td></tr></table></figure>
+<p> 替换成正则表达式分别是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">^/users/([^/]+)$</span><br><span class="line"></span><br><span class="line">^/users/([^/]+)/([^/]+)$</span><br><span class="line"></span><br><span class="line">^/users/([^/]+)/posts/([^/]+)$</span><br></pre></td></tr></table></figure>
+<p> 按照以往的方法，当收到一个请求，就需要按顺序对每个正则表达式进行匹配，如果有三个路由就需要匹配三次，有一千个路由就需要匹配一千次。但是如果将所有的路由拼成一个完整的正则表达式，就会变成：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">^(?:</span><br><span class="line"> (/users/([^/]+))</span><br><span class="line">|</span><br><span class="line"> (/users/([^/]+)/([^/]+))</span><br><span class="line">|</span><br><span class="line"> (/users/([^/]+)/posts/([^/]+))</span><br><span class="line">)$</span><br></pre></td></tr></table></figure>
+<p> 这样只需要一次就可以对所有的路由进行匹配了。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Pattern pattern = Pattern.compile (&quot;^(?:(/users/([^/]+))|(/users/([^/]+)/([^/]+))|(users/([^/]+)/posts/([^/]+)))$&quot;);</span><br><span class="line"></span><br><span class="line">Matcher matcher = pattern.matcher (&quot;/users/123/abc&quot;);</span><br><span class="line"></span><br><span class="line">if (matcher.matches ()) &#123;</span><br><span class="line">  for (int i = 1; i</span><br></pre></td></tr></table></figure>
+<p> 将会输出结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">null</span><br><span class="line">null</span><br><span class="line">/users/123/abc</span><br><span class="line">123</span><br><span class="line">abc</span><br><span class="line">null</span><br><span class="line">null</span><br><span class="line">null</span><br></pre></td></tr></table></figure>
+<p> 而路由与匹配组的映射关系应该是这样一个数组：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"> [</span><br><span class="line">    Route (&quot;/users/&#123;id&#125;&quot;), Param (&quot;id&quot;),</span><br><span class="line">    Route (&quot;/users/&#123;id&#125;/&#123;name&#125;&quot;), Param (&quot;id&quot;), Param (&quot;name&quot;),</span><br><span class="line">    Route (&quot;/users/&#123;uid&#125;/posts/&#123;pid&#125;&quot;), Param (&quot;uid&quot;), Param (&quot;pid&quot;)</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+<p> 这样也就可以很轻易的通过组的序号得到对应的路由和参数信息。</p>
+<p> 如果你想了解更多的信息，也可以看 <a href="http://nikic.github.io/2014/02/18/Fast-request-routing-using-regular-expressions.html" target="_blank" rel="noopener">这篇作者写的分析文章</a>，介绍的非常全面。</p>
+<h3 id="在-Spring-中实现-FastRoute"><a href="#在-Spring-中实现-FastRoute" class="headerlink" title="在 Spring 中实现 FastRoute"></a>在 Spring 中实现 FastRoute</h3><p> 我尝试通过继承<code>RequestMappingHandlerMapping</code>并重写<code>lookupHandlerMethod</code>方法添加自己的路由逻辑，但是这过程并不顺利，一方面是<code>AbstractHandlerMapping</code>定义了很多私有类和<code>final</code>方法，在实现类中都无法使用。另一方面是 FastRoute 需要在所有路由都注册后将它们编译成完整的正则表达式，而 Spring 中却没有这个事件，所以我只能在第一次请求的时候进行这个编译操作。</p>
+<p> <a href="https://github.com/ScienJus/fastroute-spring" target="_blank" rel="noopener">这是我目前完成的一个实现</a>，它的实现方式很糟糕，并且阉割了很多功能，不过已经可以进行最基本的性能测试了。我创建了大概 1000 个左右的路由（其中五分之二是静态路由，五分之三是正则路由）分别进行了两种测试：</p>
+<p> 方式 1：使用 Jmeter 进行压力测试，线程数 200，业务逻辑仅仅是返回一个字符串。</p>
+<p><code>RequestMappingHandlerMapping</code>的结果：</p>
+<p><img src="/uploads/2016/04/route2.jpg" alt="RequestMappingHandlerMapping"></p>
+<p><code>FastRouteHandlerMapping</code>的结果</p>
+<p><img src="/uploads/2016/04/route1.jpg" alt="RequestMappingHandlerMapping"></p>
+<p> 方式 2：直接在程序内部记录<code>lookupHandlerMethod</code>方法所消耗的时间，因为<code>FastRouteHandlerMapping</code>实际上只重写了这个方法。</p>
+<p><code>RequestMappingHandlerMapping</code>的结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">50000 次调用时间：84370ms</span><br></pre></td></tr></table></figure>
+<p><code>FastRouteHandlerMapping</code>的结果：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">50000 次调用时间：2932ms</span><br></pre></td></tr></table></figure>
+<p> 可以看到性能提升还是非常明显的！</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/my-restful-api-best-practices/" rel="next" title="我所认为的RESTful API最佳实践">
+                <i class="fa fa-chevron-left"></i> 我所认为的RESTful API最佳实践
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/elasticsearch-function-score-query/" rel="prev" title="通过Function Score Query优化Elasticsearch搜索结果">
+                通过Function Score Query优化Elasticsearch搜索结果 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Spring-的路由实现"><span class="nav-number">1.</span> <span class="nav-text">Spring 的路由实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#FastRoute-的路由实现"><span class="nav-number">2.</span> <span class="nav-text">FastRoute 的路由实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#在-Spring-中实现-FastRoute"><span class="nav-number">3.</span> <span class="nav-text">在 Spring 中实现 FastRoute</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/fastroute-spring/';
+          this.page.identifier = 'fastroute-spring/';
+          this.page.title = '使用FastRoute重写Spring的路由';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

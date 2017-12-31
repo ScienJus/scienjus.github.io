@@ -1,0 +1,799 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="获取群列表 请求方式：Post url：http://s.web2.qq.com/api/get_group_name_list_mask2 referer：http://d1.web2.qq.com/proxy.html?v=20151105001&amp;amp;callback=1&amp;amp;id=2  请求参数和 获取好友列表 一样，这里顺便再提供一个Java版的加密算法： 123456789101">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Web QQ协议分析（五）：群和讨论组相关">
+<meta property="og:url" content="http://www.scienjus.com/webqq-analysis-5/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="获取群列表 请求方式：Post url：http://s.web2.qq.com/api/get_group_name_list_mask2 referer：http://d1.web2.qq.com/proxy.html?v=20151105001&amp;amp;callback=1&amp;amp;id=2  请求参数和 获取好友列表 一样，这里顺便再提供一个Java版的加密算法： 123456789101">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Web QQ协议分析（五）：群和讨论组相关">
+<meta name="twitter:description" content="获取群列表 请求方式：Post url：http://s.web2.qq.com/api/get_group_name_list_mask2 referer：http://d1.web2.qq.com/proxy.html?v=20151105001&amp;amp;callback=1&amp;amp;id=2  请求参数和 获取好友列表 一样，这里顺便再提供一个Java版的加密算法： 123456789101">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/webqq-analysis-5/"/>
+
+
+
+
+
+  <title> Web QQ协议分析（五）：群和讨论组相关 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/webqq-analysis-5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Web QQ协议分析（五）：群和讨论组相关
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-12-19T13:33:40+08:00">
+                2015-12-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/webqq-analysis-5/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="webqq-analysis-5/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="获取群列表"><a href="#获取群列表" class="headerlink" title="获取群列表"></a>获取群列表</h3><p> 请求方式：<code>Post</code></p>
+<p>url：<code>http://s.web2.qq.com/api/get_group_name_list_mask2</code></p>
+<p>referer：<code>http://d1.web2.qq.com/proxy.html?v=20151105001&amp;callback=1&amp;id=2</code></p>
+<p> 请求参数和 <a href="http://www.scienjus.com/?p=326&amp;preview=true">获取好友列表</a> 一样，这里顺便再提供一个<code>Java</code>版的加密算法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private static String hash (long x, String K) &#123;</span><br><span class="line">    int [] N = new int [4];</span><br><span class="line">    for (int T = 0; T &gt; 24 &amp; 255 ^ U [0].charAt (0);</span><br><span class="line">    V [1] = x &gt;&gt; 16 &amp; 255 ^ U [0].charAt (1);</span><br><span class="line">    V [2] = x &gt;&gt; 8 &amp; 255 ^ U [1].charAt (0);</span><br><span class="line">    V [3] = x &amp; 255 ^ U [1].charAt (1);</span><br><span class="line"></span><br><span class="line">    long [] U1 = new long [8];</span><br><span class="line"></span><br><span class="line">    for (int T = 0; T &gt; 1] : V [T &gt;&gt; 1];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String [] N1 = &#123;&quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;, &quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;, &quot;E&quot;, &quot;F&quot;&#125;;</span><br><span class="line">    String V1 = &quot;&quot;;</span><br><span class="line">    for (long aU1 : U1) &#123;</span><br><span class="line">        V1 += N1 [(int) ((aU1 &gt;&gt; 4) &amp; 15)];</span><br><span class="line">        V1 += N1 [(int) (aU1 &amp; 15)];</span><br><span class="line">    &#125;</span><br><span class="line">    return V1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 请求成功后会返回的 JSON 格式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;retcode&quot;: 0,</span><br><span class="line">    &quot;result&quot;: &#123;</span><br><span class="line">        &quot;gmasklist&quot;: [],</span><br><span class="line">        &quot;gnamelist&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;flag&quot;: 167864331,</span><br><span class="line">                &quot;name&quot;: &quot;群名&quot;,</span><br><span class="line">                &quot;gid&quot;: 14611812014,</span><br><span class="line">                &quot;code&quot;: 3157131718</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        &quot;gmarklist&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;uin&quot;: 18796074161,</span><br><span class="line">                &quot;markname&quot;: &quot;备注&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>gnamelist</code>包含群信息，其中<code>name</code>为群名称，<code>gid</code>为群编号（用于发消息），<code>code</code>也是群编号（用于获取群详细信息），<code>gmarklist</code>包含群的备注信息，<code>markname</code>为备注名。<code>gmasklist</code>目前都是空列表。</p>
+<h3 id="获取群详细信息"><a href="#获取群详细信息" class="headerlink" title="获取群详细信息"></a>获取群详细信息</h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>http://s.web2.qq.com/api/get_group_info_ext2?gcode=\#{group_code}&amp;vfwebqq=\#{vfwebqq}&amp;t=0.1</code></p>
+<p>referer：<code>http://s.web2.qq.com/proxy.html?v=20130916001&amp;callback=1&amp;id=1</code></p>
+<p> 请求参数中的<code>gcode</code>就是群列表中获取的<code>code</code>（注意不是<code>gid</code>）。请求成功后的 JSON 格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;retcode&quot;: 0,</span><br><span class="line">    &quot;result&quot;: &#123;</span><br><span class="line">        &quot;stats&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;client_type&quot;: 1,</span><br><span class="line">                &quot;uin&quot;: 2146674552,</span><br><span class="line">                &quot;stat&quot;: 50</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        &quot;minfo&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;nick&quot;: &quot;昵称&quot;,</span><br><span class="line">                &quot;province&quot;: &quot;北京&quot;,</span><br><span class="line">                &quot;gender&quot;: &quot;male&quot;,</span><br><span class="line">                &quot;uin&quot;: 3623536468,</span><br><span class="line">                &quot;country&quot;: &quot;中国&quot;,</span><br><span class="line">                &quot;city&quot;: &quot;&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        &quot;ginfo&quot;: &#123;</span><br><span class="line">            &quot;face&quot;: 0,</span><br><span class="line">            &quot;memo&quot;: &quot;群公告！&quot;,</span><br><span class="line">            &quot;class&quot;: 25,</span><br><span class="line">            &quot;fingermemo&quot;: &quot;&quot;,</span><br><span class="line">            &quot;code&quot;: 591539174,</span><br><span class="line">            &quot;createtime&quot;: 1231435199,</span><br><span class="line">            &quot;flag&quot;: 721421329,</span><br><span class="line">            &quot;level&quot;: 4,</span><br><span class="line">            &quot;name&quot;: &quot;群名称&quot;,</span><br><span class="line">            &quot;gid&quot;: 2419762790,</span><br><span class="line">            &quot;owner&quot;: 3509557797,</span><br><span class="line">            &quot;members&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;muin&quot;: 3623536468,</span><br><span class="line">                    &quot;mflag&quot;: 192</span><br><span class="line">                &#125;</span><br><span class="line">            ],</span><br><span class="line">            &quot;option&quot;: 2</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;cards&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;muin&quot;: 3623536468,</span><br><span class="line">                &quot;card&quot;: &quot;群名片&quot;</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        &quot;vipinfo&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;vip_level&quot;: 6,</span><br><span class="line">                &quot;u&quot;: 2390929289,</span><br><span class="line">                &quot;is_vip&quot;: 1</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这个请求不光会返回群信息，还会把群里面所有成员的信息都返回，所以数据量会比较大，而且结构复杂解析写起来也麻烦。</p>
+<p> 其中<code>ginfo</code>包含群的基本信息，<code>memo</code>是群公告、<code>name</code>是群名称、<code>createtime</code>是创建时间、<code>owner</code>是创建者的<code>uin</code>、<code>gid</code>和<code>code</code>分别对应之前群列表的<code>id</code>和<code>code</code>。这里面虽然有一个<code>members</code>表示群成员，但是里面信息太少就不用解析了。<code>stats</code>表示群成员的登录状态，<code>minfo</code>是群成员的基本信息，<code>cards</code>是成员在群中的名片，<code>vipinfo</code>是会员信息，这些在好友列表中都介绍过，就不再重复了。</p>
+<p> 这里有一点需要注意的是，如果群里没有人改名片，<code>cards</code>并不会返回一个空列表，而是直接没有这个 key，所以对于这个字段要进行一下判空操作，否则有可能会出错。</p>
+<h3 id="获取讨论组列表"><a href="#获取讨论组列表" class="headerlink" title="获取讨论组列表"></a>获取讨论组列表</h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>http://s.web2.qq.com/api/get_discus_list?clientid=53999199&amp;psessionid=\#{psessionid}&amp;vfwebqq=\#{vfwebqq}&amp;t=0.1</code></p>
+<p>referer：<code>http://d1.web2.qq.com/proxy.html?v=20151105001&amp;callback=1&amp;id=2</code></p>
+<p> 请求成功后遍历<code>dnamelist</code>，<code>did</code>为讨论组编号，<code>name</code>为讨论组名称。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;retcode&quot;: 0,</span><br><span class="line">    &quot;result&quot;: &#123;</span><br><span class="line">        &quot;dnamelist&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;did&quot;: 167864331,</span><br><span class="line">                &quot;name&quot;: &quot;讨论组名&quot;,</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="获取讨论组详细信息"><a href="#获取讨论组详细信息" class="headerlink" title="获取讨论组详细信息"></a>获取讨论组详细信息</h3><p> 请求方式：<code>Get</code></p>
+<p>url：<code>http://d1.web2.qq.com/channel/get_discu_info?did=\#{discuss_id}&amp;psessionid=\#{psessionid}&amp;vfwebqq=\#{vfwebqq}&amp;clientid=53999199&amp;t=0.1</code></p>
+<p>referer：<code>http://d1.web2.qq.com/proxy.html?v=20151105001&amp;callback=1&amp;id=2</code></p>
+<p> 请求成功的 JSON 格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;result&quot;: &#123;</span><br><span class="line">        &quot;info&quot;: &#123;</span><br><span class="line">            &quot;did&quot;: 236426547,</span><br><span class="line">            &quot;discu_name&quot;: &quot;啊啊啊啊&quot;,</span><br><span class="line">            &quot;mem_list&quot;: [</span><br><span class="line">                &#123;</span><br><span class="line">                    &quot;mem_uin&quot;: 3466696377,</span><br><span class="line">                    &quot;ruin&quot;: 1301948</span><br><span class="line">                &#125;</span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &quot;mem_info&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;nick&quot;: &quot;Hey&quot;,</span><br><span class="line">                &quot;uin&quot;: 3466696377</span><br><span class="line">            &#125;</span><br><span class="line">        ],</span><br><span class="line">        &quot;mem_status&quot;: [</span><br><span class="line">            &#123;</span><br><span class="line">                &quot;client_type&quot;: 7,</span><br><span class="line">                &quot;status&quot;: &quot;online&quot;,</span><br><span class="line">                &quot;uin&quot;: 3253160543</span><br><span class="line">            &#125;</span><br><span class="line">        ]</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;retcode&quot;: 0</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>info</code>为讨论组资料，<code>mem_info</code>为讨论组成员的信息，<code>mem_status</code>为登录状态，基本和群信息的格式差不多。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/webqq-analysis-4/" rel="next" title="Web QQ协议分析（四）：好友相关">
+                <i class="fa fa-chevron-left"></i> Web QQ协议分析（四）：好友相关
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/webqq-analysis-6/" rel="prev" title="Web QQ协议分析（六）：其他">
+                Web QQ协议分析（六）：其他 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#获取群列表"><span class="nav-number">1.</span> <span class="nav-text">获取群列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获取群详细信息"><span class="nav-number">2.</span> <span class="nav-text">获取群详细信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获取讨论组列表"><span class="nav-number">3.</span> <span class="nav-text">获取讨论组列表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#获取讨论组详细信息"><span class="nav-number">4.</span> <span class="nav-text">获取讨论组详细信息</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/webqq-analysis-5/';
+          this.page.identifier = 'webqq-analysis-5/';
+          this.page.title = 'Web QQ协议分析（五）：群和讨论组相关';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

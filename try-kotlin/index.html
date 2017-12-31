@@ -1,0 +1,827 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="前几天 Kotlin 正式发布了 1.0 版本，我初步了解并使用了一下，觉得确实很容易上手并且有很多非常好的特性，所以简单介绍一下。 Kotlin 由 Jetbrains 开发，在 GitHub 上开源，运行在 JVM 上，它的特点是可以与 Java 完全兼容且互相调用。所以它可以在 Java 庞大的第三方库支持下以更简洁、更安全的语法创建一个运行在 JVM 上的项目。并且 Kotlin 最低支持">
+<meta property="og:type" content="article">
+<meta property="og:title" content="尝试了一下Kotlin">
+<meta property="og:url" content="http://www.scienjus.com/try-kotlin/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="前几天 Kotlin 正式发布了 1.0 版本，我初步了解并使用了一下，觉得确实很容易上手并且有很多非常好的特性，所以简单介绍一下。 Kotlin 由 Jetbrains 开发，在 GitHub 上开源，运行在 JVM 上，它的特点是可以与 Java 完全兼容且互相调用。所以它可以在 Java 庞大的第三方库支持下以更简洁、更安全的语法创建一个运行在 JVM 上的项目。并且 Kotlin 最低支持">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="尝试了一下Kotlin">
+<meta name="twitter:description" content="前几天 Kotlin 正式发布了 1.0 版本，我初步了解并使用了一下，觉得确实很容易上手并且有很多非常好的特性，所以简单介绍一下。 Kotlin 由 Jetbrains 开发，在 GitHub 上开源，运行在 JVM 上，它的特点是可以与 Java 完全兼容且互相调用。所以它可以在 Java 庞大的第三方库支持下以更简洁、更安全的语法创建一个运行在 JVM 上的项目。并且 Kotlin 最低支持">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/try-kotlin/"/>
+
+
+
+
+
+  <title> 尝试了一下Kotlin | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/try-kotlin/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                尝试了一下Kotlin
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-02-19T12:15:37+08:00">
+                2016-02-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/try-kotlin/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="try-kotlin/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>前几天 Kotlin 正式发布了 1.0 版本，我初步了解并使用了一下，觉得确实很容易上手并且有很多非常好的特性，所以简单介绍一下。</p>
+<p>Kotlin 由 Jetbrains 开发，在 GitHub 上开源，运行在 JVM 上，它的特点是可以与 Java 完全兼容且互相调用。所以它可以在 Java 庞大的第三方库支持下以更简洁、更安全的语法创建一个运行在 JVM 上的项目。并且 Kotlin 最低支持的 JDK 版本是 1.6。</p>
+<p> 由于 JetBrains 同时也是 IDEA 的开发商，所以在 IDEA 上开发 Kotlin 项目是非常简单的，只需要安装插件（其中已经包含了对应的支持库），就可以创建项目开始编写程序了。</p>
+<p> 下面介绍几个我认为还比较不错的特性（相对于 Java 而言，其实大部分特性都可以看到其他语言的影子）：</p>
+<h3 id="更安全的流程"><a href="#更安全的流程" class="headerlink" title="更安全的流程"></a>更安全的流程</h3><p>Kotlin号称比 Java 拥有更高的安全性，这里主要举两个例子：</p>
+<ul>
+<li>所有变量在声明时都需要指定是只读的，还是读写的</li>
+<li><p>所有对象在声明时都需要指定该对象是否可以为<code>null</code></p>
+<p>使用<code>var</code>和<code>val</code>可以声明一个变量，其中用<code>val</code>声明的变量一旦赋值后便不可以再改变了，而使用<code>var</code>声明的变量可以随时改变。例如：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">val a = 1</span><br><span class="line">a += 1 // 编译错误</span><br><span class="line"></span><br><span class="line">var b = 1</span><br><span class="line">b += 1 //2</span><br></pre></td></tr></table></figure>
+<p> 默认声明的对象是不允许为<code>null</code>的，如果你想声明一个可以为<code>null</code>的对象，需要在类型的后面添加一个<code>?</code>，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">var a: String = &quot;abc&quot;</span><br><span class="line">a = null // 编译错误</span><br><span class="line"></span><br><span class="line">var b: String? = &quot;abc&quot;</span><br><span class="line">b = null //ok</span><br></pre></td></tr></table></figure>
+<p> 到这里还没有结束，当调用这两个对象的方法时，会发现<code>b</code>无法通过编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">val length = a.length //ok</span><br><span class="line"></span><br><span class="line">var length = b.length // 编译错误</span><br></pre></td></tr></table></figure>
+<p> 原因是<code>b</code>的类型是<code>String?</code>，有可能为<code>null</code>从而引发<code>NullPointException</code>，所以会编译错误。</p>
+<p> 这时候如果是 Java，这时候就需要这样一段代码，先判断<code>b != null</code>再调用<code>b.length</code>，否则直接返回<code>0</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int length = b != null ? b.length : 0;</span><br></pre></td></tr></table></figure>
+<p> 而在 Kotlin 中，只需要这样写就可以达到与上面 Java 代码一样的效果:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">val length = b?.length : 0</span><br></pre></td></tr></table></figure>
+<p><code>?.</code>的作用是一旦发现调用者为<code>null</code>时，直接停止并返回一个<code>null</code>，也许你会觉得这两句差别也不是很大，但是如果调用链很长呢？比如下面这行代码用 Java 写出来想必要费一番功夫了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">val name = post?.author?.friends?.get (0)?.name : &quot;&quot;</span><br></pre></td></tr></table></figure>
+<p> 还有一种情况是：你确信在正常逻辑中<code>b</code>不可能是<code>null</code>，如果发生了就干脆让它抛出来<code>NullPointException</code>，然后在对这个异常进行处理。那么就可以用另外一种写法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">val length = b!!.length</span><br></pre></td></tr></table></figure>
+<p> 归根结底，这两个特性的目的都是通过将一些运行时不可预知的错误转换成编译时可预知的错误，从而提高程序的安全性。</p>
+<h3 id="更简单的实体类"><a href="#更简单的实体类" class="headerlink" title="更简单的实体类"></a>更简单的实体类</h3><p> 在项目的开发中，实体类是非常常见的（例如许多人所说的 POJO、DTO、VO、Model、Form 等等），这种类的特征是只有一些私有属性和对应的<code>get</code>/<code>set</code>方法。而其中的<code>get</code>/<code>set</code>方法在大部分情况下又是毫无意义的（基本也都是通过 IDE 自动生成或是通过 lombok 在编译时生成的），然而在 Kotlin 中，实体类的定义将更加简单，只需要一行代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data class User (val name: String, var age: Int?, var country: String = &apos;Unknown&apos;)</span><br></pre></td></tr></table></figure>
+<p> 上面这一行简单的代码实际表达了很多的东西，首先可以看出，这个是一个<code>User</code>类，有三个字段<code>name</code>，<code>age</code>和<code>country</code>。由于它是一个<code>data class</code>，Kotlin 会自动为它生成与这三个属性相关的构造函数、<code>get</code>/<code>set</code>、<code>toString</code>、<code>equals</code>和<code>hashCode</code>等方法。</p>
+<p> 并且由于每个字段都有一些不同的特征，所以他们之间还有一些不同：</p>
+<ul>
+<li><code>name</code>被声明成<code>val</code>，因此它没有<code>set</code>方法，也不允许通过<code>name=</code>赋值</li>
+<li><code>age</code>允许为空，所以在使用构造方法创建对象时，可以不设置这个属性的值</li>
+<li><code>country</code>拥有一个默认值<code>Unknown</code>，所以它在构造方法中也是可选的</li>
+</ul>
+<h3 id="更强大的-switch"><a href="#更强大的-switch" class="headerlink" title="更强大的 switch"></a>更强大的 switch</h3><p>Kotlin 使用<code>when</code>代替 Java 中的<code>switch</code>，并且功能更加强大。举一个比较全面的例子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">when (obj) &#123;</span><br><span class="line">    1 -&gt; print (&quot;number 1&quot;)</span><br><span class="line">    &quot;Hello&quot; -&gt; print (&quot;say hello&quot;)</span><br><span class="line">    in 1..10 -&gt; print (&quot;between 1 and 10&quot;)</span><br><span class="line">    is Int -&gt; print (&quot;number $&#123;obj&#125;&quot;)</span><br><span class="line">    !is String -&gt; print (&quot;not string&quot;)</span><br><span class="line">    obj.isEmpty () -&gt; print (&quot;empty string&quot;)</span><br><span class="line">    else -&gt; print (&quot;Unknown&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>when</code>中的表达式既可以判断是否相等，也可以是条件表达式。所以不光可以代替<code>switch..case..</code>也可以代替多选项的<code>if..else..</code>，同时也没有惹人厌的<code>fallthrough</code>。</p>
+<h3 id="更方便的扩展"><a href="#更方便的扩展" class="headerlink" title="更方便的扩展"></a>更方便的扩展</h3><p> 在 Kotlin 中可以直接对已有的类添加新的方法，这一点比较像 Ruby。</p>
+<p> 例如我们需要一个方法将日期类型转换成对应格式的字符串，一般在 Java 中我们会定义一个<code>DateUtils</code>类，并加入这样一个方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">public static String format (Date date, String pattern) &#123;</span><br><span class="line">    if (pattern == null) &#123;</span><br><span class="line">        pattern = &quot;yyyy-MM-dd&quot;</span><br><span class="line">    &#125;</span><br><span class="line">    return new SimpleDateFormat (pattern).format (date); // 这里只是为了写起来简单，实际不需要每次都创建 SimpleDateFormat</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 使用时就是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Date now = new Date ();</span><br><span class="line">System.out.println (DateUtils.format (date));</span><br></pre></td></tr></table></figure>
+<p> 而在 Kotlin 中，只需要直接对原有的<code>Date</code>类进行扩展即可，写法是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fun Date.format (pattern: String = &quot;yyyy-MM-dd&quot;): String &#123;</span><br><span class="line">    return SimpleDateFormat (pattern).format (this)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 使用时直接在对象上调用即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">var now = Date ();</span><br><span class="line">println (now.format ())</span><br></pre></td></tr></table></figure>
+<p> 从语义上来说是不是这种方式更好呢？而且链式调用也要比传参的方式看起来更舒服些。</p>
+<p>Kotlin 已经通过这种方式对 Java 中的许多类进行了拓展，例如深受诟病的集合类。Java 的集合类功能相当弱，虽然可以用但是用起来非常不爽。所以例如 Scala 就直接重写了一套自己的集合类给用户使用。</p>
+<p> 与 Scala 不同的是，Kotlin 使用拓展方法来对 JDK 进行封装，这样能保证完全兼容 Java 代码。例如只需要下面这两行代码就可以实现<code>List.filter</code>方法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public inline fun &gt; Iterable.filterTo (destination: C, predicate: (T) -&gt; Boolean): C &#123;</span><br><span class="line">    for (element in this) if (predicate (element)) destination.add (element)</span><br><span class="line">    return destination</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这些内置的方法非常好用，但这并不是最重要的，最重要的是它提供了这种拓展的方式，这样即使没有这些方法，或是这些方法满足不了你的需求，你也可以自己在原有的类上定义新的方法。</p>
+<h3 id="更好的将来"><a href="#更好的将来" class="headerlink" title="更好的将来"></a>更好的将来</h3><p>Kotlin 还包含了很多特性，例如<code>lambda</code>表达式、字符串模板等，还有大量的语法糖。由于篇幅有限就不在这里一一介绍了。</p>
+<p> 总而言之，目前 Java 语言已经有了相当长的历史了，在这点有好处有坏处。好处是它拥有庞大的生态圈，海量的资源，而坏处则是长时间的迭代和为了保持向后兼容导致语言层面留下了很多坑，而且也拖慢了语言本身的发展（Java8 已经推出很久了，但是大部分人都还在用着 Java6 和 Java7）。</p>
+<p> 而 Kotlin 不一样，他站在 Java 这个巨人的肩膀上，可以随意的调用所有资源，但是在语言层面上它又是全新的，不用去兼容，不用去填坑，不用去向任何人妥协。我相信它的未来将是光明的。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/building-search-server-with-elasticsearch/" rel="next" title="使用Elasticsearch搭建搜索平台">
+                <i class="fa fa-chevron-left"></i> 使用Elasticsearch搭建搜索平台
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/get-field-annotation-property-by-jackson-contextualserializer/" rel="prev" title="Jackson使用ContextualSerializer在序列化时获取字段注解的属性">
+                Jackson使用ContextualSerializer在序列化时获取字段注解的属性 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#更安全的流程"><span class="nav-number">1.</span> <span class="nav-text">更安全的流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更简单的实体类"><span class="nav-number">2.</span> <span class="nav-text">更简单的实体类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更强大的-switch"><span class="nav-number">3.</span> <span class="nav-text">更强大的 switch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更方便的扩展"><span class="nav-number">4.</span> <span class="nav-text">更方便的扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更好的将来"><span class="nav-number">5.</span> <span class="nav-text">更好的将来</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/try-kotlin/';
+          this.page.identifier = 'try-kotlin/';
+          this.page.title = '尝试了一下Kotlin';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

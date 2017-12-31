@@ -1,0 +1,866 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="映射 类型只是逻辑上的概念，实际在物理结构上是没有这个概念的。所以一个字段如果分布在相同索引不同类型的文档中，字段的类型必须是相同的。  通过GET /index-name/_mapping [/type-name]可以查看类型的映射（如果不指定类型名，就是查看该索引的所有映射）。  通过PUT /index-name/_mapping [/type-name]可以手动添加和修改映射，但是无法修改">
+<meta property="og:type" content="article">
+<meta property="og:title" content="[Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据">
+<meta property="og:url" content="http://www.scienjus.com/elasticsearch-in-action-3/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="映射 类型只是逻辑上的概念，实际在物理结构上是没有这个概念的。所以一个字段如果分布在相同索引不同类型的文档中，字段的类型必须是相同的。  通过GET /index-name/_mapping [/type-name]可以查看类型的映射（如果不指定类型名，就是查看该索引的所有映射）。  通过PUT /index-name/_mapping [/type-name]可以手动添加和修改映射，但是无法修改">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/06/multiple-updates.jpg">
+<meta property="og:image" content="http://7xk046.com1.z0.glb.clouddn.com/wp-content/uploads/2016/06/concurrency-control.jpg">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="[Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据">
+<meta name="twitter:description" content="映射 类型只是逻辑上的概念，实际在物理结构上是没有这个概念的。所以一个字段如果分布在相同索引不同类型的文档中，字段的类型必须是相同的。  通过GET /index-name/_mapping [/type-name]可以查看类型的映射（如果不指定类型名，就是查看该索引的所有映射）。  通过PUT /index-name/_mapping [/type-name]可以手动添加和修改映射，但是无法修改">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2016/06/multiple-updates.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/elasticsearch-in-action-3/"/>
+
+
+
+
+
+  <title> [Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/elasticsearch-in-action-3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                [Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-06-27T07:17:31+08:00">
+                2016-06-27
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/elasticsearch-in-action-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="elasticsearch-in-action-3/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="映射"><a href="#映射" class="headerlink" title="映射"></a>映射</h3><p> 类型只是逻辑上的概念，实际在物理结构上是没有这个概念的。所以一个字段如果分布在相同索引不同类型的文档中，字段的类型必须是相同的。</p>
+<p> 通过<code>GET /index-name/_mapping [/type-name]</code>可以查看类型的映射（如果不指定类型名，就是查看该索引的所有映射）。</p>
+<p> 通过<code>PUT /index-name/_mapping [/type-name]</code>可以手动添加和修改映射，但是无法修改已经存在文档的字段映射。</p>
+<h3 id="基础字段类型"><a href="#基础字段类型" class="headerlink" title="基础字段类型"></a>基础字段类型</h3><p>Elasticsearch 的基础字段类型分为字符串（<code>string</code>）、数字（<code>number</code>）、布尔（<code>boolean</code>）和日期（<code>date</code>）四种。</p>
+<h4 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h4><p> 分析器是字符串映射中一个比较重要的概念，它负责分析文本内容，并对其做一些搜索相关的处理。例如默认的分析器会将所有字母都转换为小写，保证搜索时不需要区分大小写。</p>
+<p> 分析器会将文本内容解析成一个个词元，词元是文本中能被索引和搜索的基础单元，它可以是一个单词、一个 ip 地址或是一个邮箱。</p>
+<p> 通过在映射中设置字段的<code>index</code>为<code>not_analyzed</code>可以使该字段跳过分析阶段，将整个值作为一个词元索引。</p>
+<p> 如果设置<code>index</code>为<code>no</code>，那么该字段不会被索引，也就是说无法通过该字段进行搜索。当一个字段不需要被搜索时，这样做可以减少索引空间占用并加快索引和查询的速度。</p>
+<h4 id="数字"><a href="#数字" class="headerlink" title="数字"></a>数字</h4><p> 数字类型分为整型的<code>byte</code>，<code>short</code>，<code>integer</code>和<code>long</code>，浮点型的<code>float</code>和<code>double</code>。这些类型的存储空间和范围和 Java 中是相同的。</p>
+<p> 如果不确定索引数据的范围，就使用最大范围的<code>long</code>和<code>double</code>，虽然会占用更多的空间导致索引变大和搜索变慢。但是最起码不会在建立索引时出现超出范围（<code>out-of-range</code>）错误。</p>
+<h4 id="日期"><a href="#日期" class="headerlink" title="日期"></a>日期</h4><p>日期类型在索引时会转换为 long 类型的 unix 时间戳，在传输时则会格式化为 string。默认的格式化方案为 ISO 8601，也可以自己指定格式化方式方案。</p>
+<p>Elasticsearch 内置了很多可选的格式化方案，也可以自定义格式。</p>
+<h4 id="布尔"><a href="#布尔" class="headerlink" title="布尔"></a>布尔</h4><p> 在 Lucene 中会将<code>true</code>、<code>false</code>转化为<code>T</code>和<code>F</code>索引。</p>
+<h3 id="复杂字段类型"><a href="#复杂字段类型" class="headerlink" title="复杂字段类型"></a>复杂字段类型</h3><p>Elasticsearch 还提供了两种方式可以使一个字段拥有多个值。分别是数组（<code>array</code>）和复杂字段（<code>multi-fields</code>）。</p>
+<h4 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h4><p> 数组的映射定义方法和普通字段的定义方法一样，例如一个 string 的映射就可以直接用于 string 数组。这在 Lucene 中仅仅是对一个字段的多个词元进行了索引。</p>
+<h4 id="复杂字段"><a href="#复杂字段" class="headerlink" title="复杂字段"></a>复杂字段</h4><p> 复杂字段可以使一个字段拥有多个映射配置。例如一个<code>name</code>字段，在某些场景下会使用分词匹配，而有些地方需要完全匹配，那么就需要用这种方式配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;users&quot;: &#123;</span><br><span class="line">    &quot;properties&quot;: &#123;</span><br><span class="line">      &quot;name&quot;: &#123;</span><br><span class="line">        &quot;type&quot;: &quot;string&quot;,</span><br><span class="line">        &quot;index&quot;: &quot;analyzed&quot;,</span><br><span class="line">        &quot;fields&quot;: &#123;</span><br><span class="line">          &quot;verbatim&quot;: &#123;</span><br><span class="line">            &quot;type&quot;: &quot;string&quot;,</span><br><span class="line">            &quot;index&quot;: &quot;not_analyzed&quot;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 需要分词匹配时，使用<code>name</code>搜索，需要全部匹配时，使用<code>name.verbatim</code>搜索。</p>
+<h3 id="内置字段"><a href="#内置字段" class="headerlink" title="内置字段"></a>内置字段</h3><p>Elasticsearch 内置了许多字段，这些字段多用于标示文档的特征。</p>
+<h4 id="source"><a href="#source" class="headerlink" title="\_source"></a>\_source</h4><p><code>_source</code>字段存储了文档的源数据。它可以通过设置<code>enabled</code>属性决定是否需要存储。在默认情况下这个值是<code>true</code>。</p>
+<p> 由于很多重要的功能都需要这个字段（例如更新文档和高亮内容），并且它的存储十分廉价，所以在 2.0 版本已经删除了这个配置。</p>
+<p> 通过配置映射的<code>store</code>可以决定该字段是否存储，这样可以节约一些空间。</p>
+<h4 id="all"><a href="#all" class="headerlink" title="\_all"></a>\_all</h4><p><code>_all</code>字段会将文档的所有字段内容汇总并索引，所以当通过该字段搜索时，只要有任意字段满足条件都会返回该文档。在不确定具体查询某个字段的情境下十分有用。</p>
+<p> 如果总是在确定的字段上搜索，那么可以在映射中关闭<code>_all</code>字段：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&quot;users&quot;: &#123;</span><br><span class="line">  &quot;_all&quot;: &#123;</span><br><span class="line">    &quot;enabled&quot;: false</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 或者可以通过<code>include_in_all</code>属性使某个字段不会出现在<code>_all</code>字段中，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;users&quot;: &#123;</span><br><span class="line">    &quot;properties&quot;: &#123;</span><br><span class="line">      &quot;name&quot;: &#123;</span><br><span class="line">        &quot;type&quot;: &quot;string&quot;,</span><br><span class="line">        &quot;index&quot;: &quot;analyzed&quot;,</span><br><span class="line">        &quot;include_in_all&quot;: false</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这样可以节约索引空间，并加快查询和索引的速度。</p>
+<h4 id="ttl"><a href="#ttl" class="headerlink" title="\_ttl"></a>\_ttl</h4><p><code>_ttl</code>字段可以使文档在一段时间后自动删除。像是 Redis 中的<code>expire</code>指令。</p>
+<h3 id="标识字段："><a href="#标识字段：" class="headerlink" title="标识字段："></a>标识字段：</h3><p>Elasticsearch 通过<code>_index</code>、<code>_type</code>、<code>_id</code>和<code>_version</code>等字段标识某个文档，这些字段分别代表着文档所存放的索引和类型、文档的 id 和版本。</p>
+<p> 在索引文档时可以显示的指定文档 id，或是让 Elasticsearch 自动生成 id。</p>
+<h3 id="更新文档"><a href="#更新文档" class="headerlink" title="更新文档"></a>更新文档</h3><h4 id="使用文档更新"><a href="#使用文档更新" class="headerlink" title="使用文档更新"></a>使用文档更新</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">POST /index-name/type-name/id/_update</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;doc&quot;: &#123;</span><br><span class="line">    &quot;name&quot;: &quot;Roy&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 在<code>doc</code>下设置需要更新的字段和值。</p>
+<p> 当对应 id 的文档不存在时，更新不会产生任何效果，但是可以通过设置<code>upsert</code>字段使得添加内容：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">POST /index-name/type-name/id/_update</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;doc&quot;: &#123;</span><br><span class="line">    &quot;name&quot;: &quot;Roy&quot;</span><br><span class="line">  &#125;,</span><br><span class="line">  &quot;upsert&quot;: &#123;</span><br><span class="line">    &quot;name&quot;: &quot;Roy&quot;,</span><br><span class="line">    &quot;created_at&quot;: &quot;2016-06-04&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这样产生的效果是，如果 id 不存在对应的文档，将 upsert 的内容作为文档索引，如果存在的话，将 doc 的内容更新。</p>
+<h4 id="使用脚本更新"><a href="#使用脚本更新" class="headerlink" title="使用脚本更新"></a>使用脚本更新</h4><p> 使用 doc 的方式更新一个文档很有效，但是如果要更新多个文档就比较麻烦了。</p>
+<p> 一个比较常见的需求，需要将商城中所有商品的价格都增加 10。如果使用上面这种方法，就需要取出每个文档，计算价格后在更新回去，效率是极低的。</p>
+<p> 使用脚本更新便可以很简单的解决问题，只需要类似于下面这种语法：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">POST /index-name/type-name/id/_update</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  &quot;script&quot;: &quot;ctx._source.price += price_diff&quot;,</span><br><span class="line">  &quot;params&quot;: &#123;</span><br><span class="line">    &quot;price_diff&quot;: 10</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="并发问题"><a href="#并发问题" class="headerlink" title="并发问题"></a>并发问题</h4><p>Elasticsearch 更新文档的流程：</p>
+<ol>
+<li>取出已经索引的旧文档</li>
+<li>将更改的字段合并到文档中</li>
+<li><p>重新索引新文档</p>
+<p>这个操作并非为原子操作，所以在并发更新时会造成一些错误。</p>
+<p>例如有一个文档：</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;K&quot;,</span><br><span class="line">  &quot;age&quot;: 22</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 同时有两个查询要修改该文档，分别是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;doc&quot;: &#123;</span><br><span class="line">    &quot;name&quot;: &quot;W&quot;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 和</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;doc&quot;: &#123;</span><br><span class="line">    &quot;age&quot;: 25</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 希望的结果应该是两条更新都成功了，文档变成这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;name&quot;: &quot;W&quot;,</span><br><span class="line">  &quot;age&quot;: 25</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 但是实际上，如果这两条语句真的是同时操作的话，最后的结果只会有一条成功，但是其实是后一条的更新将前一条的更新覆盖掉了。</p>
+<p> 它们的流程是：</p>
+<ol>
+<li>更新语句 1 开始执行，首先取出旧文档</li>
+<li>更新语句 2 开始执行，同样取出旧文档</li>
+<li>更新语句 1 开始合并更新，合并结果为<code>{&quot;name&quot;: &quot;W&quot;, &quot;age&quot;: 22}</code></li>
+<li>更新语句 2 开始合并更新，合并结果为<code>{&quot;name&quot;: &quot;K&quot;, &quot;age&quot;: 25}</code></li>
+<li>更新语句 1 重新索引文档，文档变为<code>{&quot;name&quot;: &quot;W&quot;, &quot;age&quot;: 22}</code></li>
+<li><p>更新语句 2 重新索引文档，文档变为<code>{&quot;name&quot;: &quot;K&quot;, &quot;age&quot;: 25}</code></p>
+<p>于是更新语句 1 的结果就被更新语句 2 的结果覆盖掉了。</p>
+</li>
+</ol>
+<p><img src="/uploads/2016/06/multiple-updates.jpg" alt="并发更新可能导致的错误"></p>
+<p> 对于这种情况，Elasticsearch 给出的解决方案是给文档增加一个版本号，也就是常说的乐观锁。每次修改都会将版本号自增 1，这样修改时就可以知道在查询文档之后是否有其他更新同样修改了该文档。</p>
+<p><img src="http://7xk046.com1.z0.glb.clouddn.com/wp-content/uploads/2016/06/concurrency-control.jpg" alt="乐观锁"></p>
+<p> 乐观锁假定大部分情况下不会发生冲突，所以它允许并发操作文档并在真正发生冲突时报错。当发生冲突时，可以通过指定<code>retry_on_conflict</code>参数设定重试次数。</p>
+<p> 开发者也可以维护自己的版本号，只需要指定<code>version_type=external</code>并且每次都传一个更高的<code>version</code>即可。</p>
+<h3 id="删除文档"><a href="#删除文档" class="headerlink" title="删除文档"></a>删除文档</h3><h4 id="删除单个文档"><a href="#删除单个文档" class="headerlink" title="删除单个文档"></a>删除单个文档</h4><p> 通过<code>DELETE /index-name/type-name/id</code>可以删除指定 id 的文档。</p>
+<p> 当删除一个文档时，会将这个文档标记为已删除，然后在合并时真正去除这个文档。合并需要额外的 CPU 和磁盘 I/O 资源，好在它是一个异步操作</p>
+<h4 id="批量删除文档"><a href="#批量删除文档" class="headerlink" title="批量删除文档"></a>批量删除文档</h4><p>Elasticsearch 还提供根据自定义的查询条件删除对象。只需要将搜索 API 的请求方式从<code>GET</code>改为<code>DELETE</code>，并将<code>_search</code>改为<code>_query</code>即可。</p>
+<p> 例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DELETE /index-name/type-name/_query?q=keyWords</span><br></pre></td></tr></table></figure>
+<h4 id="并发问题-1"><a href="#并发问题-1" class="headerlink" title="并发问题"></a>并发问题</h4><p> 删除也会有并发问题，例如同更新操作一起进行时，并且这件事情无法通过外部的版本控制实现，因为任何的外部版本控制都会将版本信息存放在文档中。</p>
+<p> 为了解决这个问题，Elasticsearch 会将删除文档的版本号保留一段时间，以便阻止低版本的更新请求。默认的保留时间是 60 秒，或是通过<code>elasticsearcy.yml</code>中的<code>index.gc_deletes</code>属性配置。</p>
+<h4 id="删除索引"><a href="#删除索引" class="headerlink" title="删除索引"></a>删除索引</h4><p> 删除索引会删除掉该索引下的所有文档。这个操作的速度很快，因为会直接将所有分片中包含该索引的文件删除。</p>
+<p> 通过删除<code>_all</code>索引可以删除掉所有索引。这个操作十分危险，所以可以在<code>elasticsearch.yml</code>中设置<code>action.destructive_requires_name: true</code>阻止该操作。</p>
+<h4 id="删除类型"><a href="#删除类型" class="headerlink" title="删除类型"></a>删除类型</h4><p> 删除类型可以直接删除该类型下的所有文档。但是底层实现还是首先去查询出该类型的所有文档再一一删除，所以实际上这种行为比起删除索引要耗费更多的时间，并且占用更多的资源。</p>
+<p> 删除索引会很快，因为就是直接将所有分片中包含索引的文件删除了。</p>
+<h4 id="关闭索引"><a href="#关闭索引" class="headerlink" title="关闭索引"></a>关闭索引</h4><p> 在某些情况下，关闭索引和可以替代删除索引。关闭后的索引将禁止读写直到再次开启。</p>
+<p> 例如使用 Elasticsearch 记录日志流水，一般会在每天创建一个新的索引记录当天的日志。一般来说旧日志之后还会用与查询和统计，但是直接保留的话又会占用内存资源，这时候就可以暂时关闭改索引减少资源使用，也不会损失数据。</p>
+<p> 关闭索引的方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST index-name/_close</span><br></pre></td></tr></table></figure>
+<p> 重新开启的方式：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">POST index-name/_open</span><br></pre></td></tr></table></figure>
+<p> 当索引关闭时，唯一存放在内存中的数据只有索引的元数据，例如名称以及存储在哪些分片中。如果有足够的磁盘空间并且不确定是否还会需要再次查询这些数据，比起删除索引，关闭索引是更合适的选择。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/hbase-observer-elasticsearch/" rel="next" title="使用Observer实现HBase到Elasticsearch的数据同步">
+                <i class="fa fa-chevron-left"></i> 使用Observer实现HBase到Elasticsearch的数据同步
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/armeria-circuit-breaker/" rel="prev" title="Armeria 学习笔记之断路器">
+                Armeria 学习笔记之断路器 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#映射"><span class="nav-number">1.</span> <span class="nav-text">映射</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基础字段类型"><span class="nav-number">2.</span> <span class="nav-text">基础字段类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#字符串"><span class="nav-number">2.1.</span> <span class="nav-text">字符串</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数字"><span class="nav-number">2.2.</span> <span class="nav-text">数字</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#日期"><span class="nav-number">2.3.</span> <span class="nav-text">日期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#布尔"><span class="nav-number">2.4.</span> <span class="nav-text">布尔</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#复杂字段类型"><span class="nav-number">3.</span> <span class="nav-text">复杂字段类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#数组"><span class="nav-number">3.1.</span> <span class="nav-text">数组</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#复杂字段"><span class="nav-number">3.2.</span> <span class="nav-text">复杂字段</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内置字段"><span class="nav-number">4.</span> <span class="nav-text">内置字段</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#source"><span class="nav-number">4.1.</span> <span class="nav-text">\_source</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#all"><span class="nav-number">4.2.</span> <span class="nav-text">\_all</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ttl"><span class="nav-number">4.3.</span> <span class="nav-text">\_ttl</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#标识字段："><span class="nav-number">5.</span> <span class="nav-text">标识字段：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新文档"><span class="nav-number">6.</span> <span class="nav-text">更新文档</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#使用文档更新"><span class="nav-number">6.1.</span> <span class="nav-text">使用文档更新</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#使用脚本更新"><span class="nav-number">6.2.</span> <span class="nav-text">使用脚本更新</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#并发问题"><span class="nav-number">6.3.</span> <span class="nav-text">并发问题</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#删除文档"><span class="nav-number">7.</span> <span class="nav-text">删除文档</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#删除单个文档"><span class="nav-number">7.1.</span> <span class="nav-text">删除单个文档</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#批量删除文档"><span class="nav-number">7.2.</span> <span class="nav-text">批量删除文档</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#并发问题-1"><span class="nav-number">7.3.</span> <span class="nav-text">并发问题</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除索引"><span class="nav-number">7.4.</span> <span class="nav-text">删除索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#删除类型"><span class="nav-number">7.5.</span> <span class="nav-text">删除类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关闭索引"><span class="nav-number">7.6.</span> <span class="nav-text">关闭索引</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/elasticsearch-in-action-3/';
+          this.page.identifier = 'elasticsearch-in-action-3/';
+          this.page.title = '[Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

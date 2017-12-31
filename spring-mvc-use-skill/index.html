@@ -1,0 +1,815 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="APP 服务端的 Token 验证 通过拦截器对使用了@Authorization注解的方法进行请求拦截，从 http header 中取出 token 信息，验证其是否合法。非法直接返回 401 错误，合法将 token 对应的 user key 存入 request 中后继续执行。具体实现代码： 1234567891011121314151617181920212223242526272829">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一些Spring MVC的使用技巧">
+<meta property="og:url" content="http://www.scienjus.com/spring-mvc-use-skill/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="APP 服务端的 Token 验证 通过拦截器对使用了@Authorization注解的方法进行请求拦截，从 http header 中取出 token 信息，验证其是否合法。非法直接返回 401 错误，合法将 token 对应的 user key 存入 request 中后继续执行。具体实现代码： 1234567891011121314151617181920212223242526272829">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="一些Spring MVC的使用技巧">
+<meta name="twitter:description" content="APP 服务端的 Token 验证 通过拦截器对使用了@Authorization注解的方法进行请求拦截，从 http header 中取出 token 信息，验证其是否合法。非法直接返回 401 错误，合法将 token 对应的 user key 存入 request 中后继续执行。具体实现代码： 1234567891011121314151617181920212223242526272829">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/spring-mvc-use-skill/"/>
+
+
+
+
+
+  <title> 一些Spring MVC的使用技巧 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/spring-mvc-use-skill/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                一些Spring MVC的使用技巧
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-10-17T07:12:54+08:00">
+                2015-10-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/spring-mvc-use-skill/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="spring-mvc-use-skill/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="APP-服务端的-Token-验证"><a href="#APP-服务端的-Token-验证" class="headerlink" title="APP 服务端的 Token 验证"></a>APP 服务端的 Token 验证</h3><p> 通过拦截器对使用了<code>@Authorization</code>注解的方法进行请求拦截，从 http header 中取出 token 信息，验证其是否合法。非法直接返回 401 错误，合法将 token 对应的 user key 存入 request 中后继续执行。具体实现代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">public boolean preHandle (HttpServletRequest request,</span><br><span class="line">                         HttpServletResponse response, Object handler) throws Exception &#123;</span><br><span class="line">    // 如果不是映射到方法直接通过</span><br><span class="line">    if (!(handler instanceof HandlerMethod)) &#123;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    HandlerMethod handlerMethod = (HandlerMethod) handler;</span><br><span class="line">    Method method = handlerMethod.getMethod ();</span><br><span class="line">    // 从 header 中得到 token</span><br><span class="line">    String token = request.getHeader (httpHeaderName);</span><br><span class="line">    if (token != null &amp;&amp; token.startsWith (httpHeaderPrefix) &amp;&amp; token.length () &gt; 0) &#123;</span><br><span class="line">        token = token.substring (httpHeaderPrefix.length ());</span><br><span class="line">        // 验证 token</span><br><span class="line">        String key = manager.getKey (token);</span><br><span class="line">        if (key != null) &#123;</span><br><span class="line">            // 如果 token 验证成功，将 token 对应的用户 id 存在 request 中，便于之后注入</span><br><span class="line">            request.setAttribute (REQUEST_CURRENT_KEY, key);</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // 如果验证 token 失败，并且方法注明了 Authorization，返回 401 错误</span><br><span class="line">    if (method.getAnnotation (Authorization.class) != null) &#123;</span><br><span class="line">        response.setStatus (HttpServletResponse.SC_UNAUTHORIZED);</span><br><span class="line">        response.setCharacterEncoding (&quot;gbk&quot;);</span><br><span class="line">        response.getWriter ().write (unauthorizedErrorMessage);</span><br><span class="line">        response.getWriter ().close ();</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    // 为了防止以某种直接在 REQUEST_CURRENT_KEY 写入 key，将其设为 null</span><br><span class="line">    request.setAttribute (REQUEST_CURRENT_KEY, null);</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 通过拦截器后，使用解析器对修饰了<code>@CurrentUser</code>的参数进行注入。从 request 中取出之前存入的 user key，得到对应的 user 对象并注入到参数中。具体实现代码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public boolean supportsParameter (MethodParameter parameter) &#123;</span><br><span class="line">    Class clazz;</span><br><span class="line">    try &#123;</span><br><span class="line">        clazz = Class.forName (userModelClass);</span><br><span class="line">    &#125; catch (ClassNotFoundException e) &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    // 如果参数类型是 User 并且有 CurrentUser 注解则支持</span><br><span class="line">    if (parameter.getParameterType ().isAssignableFrom (clazz) &amp;&amp;</span><br><span class="line">            parameter.hasParameterAnnotation (CurrentUser.class)) &#123;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">public Object resolveArgument (MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception &#123;</span><br><span class="line">    // 取出鉴权时存入的登录用户 Id</span><br><span class="line">    Object object = webRequest.getAttribute (AuthorizationInterceptor.REQUEST_CURRENT_KEY, RequestAttributes.SCOPE_REQUEST);</span><br><span class="line">    if (object != null) &#123;</span><br><span class="line">        String key = String.valueOf (object);</span><br><span class="line">        // 从数据库中查询并返回</span><br><span class="line">        Object userModel = userModelRepository.getCurrentUser (key);</span><br><span class="line">        if (userModel != null) &#123;</span><br><span class="line">            return userModel;</span><br><span class="line">        &#125;</span><br><span class="line">        // 有 key 但是得不到用户，抛出异常</span><br><span class="line">        throw new MissingServletRequestPartException (AuthorizationInterceptor.REQUEST_CURRENT_KEY);</span><br><span class="line">    &#125;</span><br><span class="line">    // 没有 key 就直接返回 null</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 详细分析：<a href="http://www.scienjus.com/restful-token-authorization/">RESTful 登录设计（基于 Spring 及 Redis 的 Token 鉴权）</a></p>
+<p> 源码见：<a href="https://github.com/ScienJus/spring-restful-authorization" target="_blank" rel="noopener">ScienJus/spring-restful-authorization</a></p>
+<p> 封装好的工具类：<a href="https://github.com/ScienJus/spring-authorization-manager" target="_blank" rel="noopener">ScienJus/spring-authorization-manager</a></p>
+<h3 id="使用别名接受对象的参数"><a href="#使用别名接受对象的参数" class="headerlink" title="使用别名接受对象的参数"></a>使用别名接受对象的参数</h3><p> 请求中的参数名和代码中定义的参数名不同是很常见的情况，对于这种情况 Spring 提供了几种原生的方法：</p>
+<p> 对于<code>@RequestParam</code>可以直接指定 value 值为别名（<code>@RequestHeader</code>也是一样），例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public String home (@RequestParam (&quot;user_id&quot;) long userId) &#123;</span><br><span class="line">    return &quot;hello &quot; + userId;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 对于<code>@RequestBody</code>，由于其使使用 Jackson 将 Json 转换为对象，所以可以使用<code>@JsonProperty</code>的 value 指定别名，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">public String home (@RequestBody User user) &#123;</span><br><span class="line">    return &quot;hello &quot; + user.getUserId ();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class User &#123;</span><br><span class="line">    @JsonProperty (&quot;user_id&quot;)</span><br><span class="line">    private long userId;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 但是使用对象的属性接受参数时，就无法直接通过上面的办法指定别名了，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">public String home (User user) &#123;</span><br><span class="line">    return &quot;hello &quot; + user.getUserId ();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这时候需要使用 DataBinder 手动绑定属性和别名，我在 Stack Overflow 上找到的 <a href="http://stackoverflow.com/questions/8986593/how-to-customize-parameter-names-when-binding-spring-mvc-command-objects" target="_blank" rel="noopener">这篇文章</a> 是个不错的办法，这里就不重复造轮子了。</p>
+<h3 id="关闭默认通过请求的后缀名判断-Content-Type"><a href="#关闭默认通过请求的后缀名判断-Content-Type" class="headerlink" title="关闭默认通过请求的后缀名判断 Content-Type"></a>关闭默认通过请求的后缀名判断 Content-Type</h3><p> 之前接手的项目的开发习惯是使用.html 作为请求的后缀名，这在 Struts2 上是没有问题的（因为本身 Struts2 处理 Json 的几种方法就都很烂）。但是我接手换成 Spring MVC 后，使用<code>@ResponseBody</code>返回对象时就会报找不到转换器错误。</p>
+<p> 这是因为 Spring MVC 默认会将后缀名为.html 的请求的 Content-Type 认为是<code>text/html</code>，而<code>@ResponseBody</code>返回的 Content-Type 是<code>application/json</code>，没有任何一种转换器支持这样的转换。所以需要手动将通过后缀名判断 Content-Type 的设置关掉，并将默认的 Content-Type 设置为<code>application/json</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class WebMvcConfig extends WebMvcConfigurerAdapter &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void configureContentNegotiation (ContentNegotiationConfigurer configurer) &#123;</span><br><span class="line">        configurer.favorPathExtension (false).</span><br><span class="line">                defaultContentType (MediaType.APPLICATION_JSON);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="更改默认的-Json-序列化方案"><a href="#更改默认的-Json-序列化方案" class="headerlink" title="更改默认的 Json 序列化方案"></a>更改默认的 Json 序列化方案</h3><p> 项目中有时候会有自己独特的 Json 序列化方案，例如比较常用的使用<code>0</code>/<code>1</code>替代<code>false</code>/<code>true</code>，或是通过<code>&quot;&quot;</code>代替<code>null</code>，由于<code>@ResponseBody</code>默认使用的是<code>MappingJackson2HttpMessageConverter</code>，只需要将自己实现的<code>ObjectMapper</code>传入这个转换器：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public class CustomObjectMapper extends ObjectMapper &#123;</span><br><span class="line"></span><br><span class="line">    public CustomObjectMapper () &#123;</span><br><span class="line">        super ();</span><br><span class="line">        this.getSerializerProvider ().setNullValueSerializer (new JsonSerializer&lt;Object&gt;() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void serialize (Object value, JsonGenerator jgen, SerializerProvider provider) throws IOException &#123;</span><br><span class="line">                jgen.writeString (&quot;&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        SimpleModule module = new SimpleModule ();</span><br><span class="line">        module.addSerializer (boolean.class, new JsonSerializer&lt;Boolean&gt;() &#123;</span><br><span class="line">            @Override</span><br><span class="line">            public void serialize (Boolean value, JsonGenerator jgen, SerializerProvider provider) throws IOException &#123;</span><br><span class="line">                jgen.writeNumber (value ? 1 : 0);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">        this.registerModule (module);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="自动加密-解密请求中的-Json"><a href="#自动加密-解密请求中的-Json" class="headerlink" title="自动加密 / 解密请求中的 Json"></a>自动加密 / 解密请求中的 Json</h3><p> 涉及到<code>@RequestBody</code>和<code>@ResponseBody</code>的类型转换问题一般都在<code>MappingJackson2HttpMessageConverter</code>中解决，想要自动加密 / 解密只需要继承这个类并重写<code>readInternal</code>/<code>writeInternal</code>方法即可：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">protected Object readInternal (Class&lt;?&gt; clazz, HttpInputMessage inputMessage) throws IOException, HttpMessageNotReadableException &#123;</span><br><span class="line">    // 解密</span><br><span class="line">    String json = AESUtil.decrypt (inputMessage.getBody ());</span><br><span class="line">    JavaType javaType = getJavaType (clazz, null);</span><br><span class="line">    // 转换</span><br><span class="line">    return this.objectMapper.readValue (json, javaType);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Override</span><br><span class="line">protected void writeInternal (Object object, HttpOutputMessage outputMessage) throws IOException, HttpMessageNotWritableException &#123;</span><br><span class="line">    // 使用 Jackson 的 ObjectMapper 将 Java 对象转换成 Json String</span><br><span class="line">    ObjectMapper mapper = new ObjectMapper ();</span><br><span class="line">    String json = mapper.writeValueAsString (object);</span><br><span class="line">    // 加密</span><br><span class="line">    String result = AESUtil.encrypt (json);</span><br><span class="line">    // 输出</span><br><span class="line">    outputMessage.getBody ().write (result.getBytes ());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="基于注解的敏感词过滤功能"><a href="#基于注解的敏感词过滤功能" class="headerlink" title="基于注解的敏感词过滤功能"></a>基于注解的敏感词过滤功能</h3><p> 项目需要对用户发布的内容进行过滤，将其中的敏感词替换为<code>*</code>等特殊字符。大部分 Web 项目在处理这方面需求时都会选择过滤器（<code>Filter</code>），在过滤器中将<code>Request</code>包上一层<code>Wrapper</code>，并重写其<code>getParameter</code>等方法，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">public class SafeTextRequestWrapper extends HttpServletRequestWrapper &#123;</span><br><span class="line">    public SafeTextRequestWrapper (HttpServletRequest req) &#123;</span><br><span class="line">        super (req);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Map&lt;String, String []&gt; getParameterMap () &#123;</span><br><span class="line">        Map&lt;String, String []&gt; paramMap = super.getParameterMap ();</span><br><span class="line">        for (String [] values : paramMap.values ()) &#123;</span><br><span class="line">            for (int i = 0; i &lt; values.length; i++) &#123;</span><br><span class="line">                values [i] = SensitiveUtil.filter (values [i]);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return paramMap ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String getParameter (String name) &#123;</span><br><span class="line">        return SensitiveUtil.filter (super.getParameter (name));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">public class SafeTextFilter implements Filter &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public void init (FilterConfig filterConfig) throws ServletException &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void doFilter (ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException &#123;</span><br><span class="line">        SafeTextRequestWrapper safeTextRequestWrapper = new SafeTextRequestWrapper ((HttpServletRequest) request);</span><br><span class="line">        chain.doFilter (safeTextRequestWrapper, response);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void destroy () &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 但是这样做会有一些明显的问题，比如无法控制具体对哪些信息进行过滤。如果用户注册的邮箱或是密码中也带有<code>fuck</code>之类的敏感词，那就属于误伤了。</p>
+<p> 所以改用 Spring MVC 的 Formatter 进行拓展，只需要在<code>@RequestParam</code>的参数上使用<code>@SensitiveFormat</code>注解，Spring MVC 就会在注入该属性时自动进行敏感词过滤。既方便又不会误伤，实现方法如下：</p>
+<p> 声明<code>@SensitiveFormat</code>注解：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@Target (&#123;ElementType.FIELD, ElementType.PARAMETER&#125;)</span><br><span class="line">@Retention (RetentionPolicy.RUNTIME)</span><br><span class="line">@Documented</span><br><span class="line">public @interface SensitiveFormat &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 创建<code>SensitiveFormatter</code>类。实现<code>Formatter</code>接口，重写<code>parse</code>方法（将接收到的内容转换成对象的方法），在该方法中对接收内容进行过滤：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">public class SensitiveFormatter implements Formatter&lt;String&gt; &#123;</span><br><span class="line">    @Override</span><br><span class="line">    public String parse (String text, Locale locale) throws ParseException &#123;</span><br><span class="line">        return SensitiveUtil.filter (text);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public String print (String object, Locale locale) &#123;</span><br><span class="line">        return object;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 创建<code>SensitiveFormatAnnotationFormatterFactory</code>类，实现<code>AnnotationFormatterFactory</code>接口，将<code>@SensitiveFormat</code>与<code>SensitiveFormatter</code>绑定：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">public class SensitiveFormatAnnotationFormatterFactory implements AnnotationFormatterFactory&lt;SensitiveFormat&gt; &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Set&lt;Class&lt;?&gt;&gt; getFieldTypes () &#123;</span><br><span class="line">        Set&lt;Class&lt;?&gt;&gt; fieldTypes = new HashSet&lt;&gt;();</span><br><span class="line">        fieldTypes.add (String.class);</span><br><span class="line">        return fieldTypes;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Printer&lt;?&gt; getPrinter (SensitiveFormat annotation, Class&lt;?&gt; fieldType) &#123;</span><br><span class="line">        return new SensitiveFormatter ();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public Parser&lt;?&gt; getParser (SensitiveFormat annotation, Class&lt;?&gt; fieldType) &#123;</span><br><span class="line">        return new SensitiveFormatter ();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 最后将<code>SensitiveFormatAnnotationFormatterFactory</code>注册到 Spring MVC 中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class WebMvcConfig extends WebMvcConfigurerAdapter &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void addFormatters (FormatterRegistry registry) &#123;</span><br><span class="line">        registry.addFormatterForFieldAnnotation (new SensitiveFormatAnnotationFormatterFactory ());</span><br><span class="line">        super.addFormatters (registry);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="记录请求的返回内容"><a href="#记录请求的返回内容" class="headerlink" title="记录请求的返回内容"></a>记录请求的返回内容</h3><p> 这里提供一种比较通用的方法，基于过滤器实现，所以在非 Spring MVC 的项目也可以使用。</p>
+<p> 首先导入<code>commons-io</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;dependency&gt;</span><br><span class="line">  &lt;groupId&gt;commons-io&lt;/groupId&gt;</span><br><span class="line">  &lt;artifactId&gt;commons-io&lt;/artifactId&gt;</span><br><span class="line">  &lt;version&gt;2.4&lt;/version&gt;</span><br><span class="line">&lt;/dependency&gt;</span><br></pre></td></tr></table></figure>
+<p> 需要用到这个库中的<code>TeeOutputStream</code>，这个类可以将一个将内容同时输出到两个分支的输出流，将其封装为<code>ServletOutputStream</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">public class TeeServletOutputStream extends ServletOutputStream &#123;</span><br><span class="line"></span><br><span class="line">    private final TeeOutputStream teeOutputStream;</span><br><span class="line"></span><br><span class="line">    public TeeServletOutputStream (OutputStream one, OutputStream two) &#123;</span><br><span class="line">        this.teeOutputStream = new TeeOutputStream (one, two);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public boolean isReady () &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void setWriteListener (WriteListener listener) &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void write (int b) throws IOException &#123;</span><br><span class="line">        this.teeOutputStream.write (b);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void flush () throws IOException &#123;</span><br><span class="line">        super.flush ();</span><br><span class="line">        this.teeOutputStream.flush ();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void close () throws IOException &#123;</span><br><span class="line">        super.close ();</span><br><span class="line">        this.teeOutputStream.close ();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 然后创建一个过滤器，将原有的<code>response</code>的<code>getOutputStream</code>方法重写：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">public class LoggingFilter implements Filter &#123;</span><br><span class="line"></span><br><span class="line">    private static final Logger LOGGER = LoggerFactory.getLogger (LoggingFilter.class);</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void init (FilterConfig filterConfig) throws ServletException &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void doFilter (ServletRequest request, final ServletResponse response, FilterChain chain) throws IOException, ServletException &#123;</span><br><span class="line">        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream ();</span><br><span class="line"></span><br><span class="line">        HttpServletResponseWrapper responseWrapper = new HttpServletResponseWrapper ((HttpServletResponse) response) &#123;</span><br><span class="line"></span><br><span class="line">            private TeeServletOutputStream teeServletOutputStream;</span><br><span class="line"></span><br><span class="line">            @Override</span><br><span class="line">            public ServletOutputStream getOutputStream () throws IOException &#123;</span><br><span class="line">                return new TeeServletOutputStream (super.getOutputStream (), byteArrayOutputStream);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        chain.doFilter (request, responseWrapper);</span><br><span class="line">        String responseLog = byteArrayOutputStream.toString ();</span><br><span class="line">        if (LOGGER.isInfoEnabled () &amp;&amp; !StringUtil.isEmpty (responseLog)) &#123;</span><br><span class="line">            LOGGER.info (responseLog);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void destroy () &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 将<code>super.getOutputStream ()</code>和<code>ByteArrayOutputStream</code>分别作为两个分支流，前者会将内容返回给客户端，后者使用<code>toString</code>方法即可获得输出内容。</p>
+<p> 其他的等想到再补充…</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/download-from-baiduyun-by-thunder/" rel="next" title="使用迅雷下载百度盘文件">
+                <i class="fa fa-chevron-left"></i> 使用迅雷下载百度盘文件
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/spring-boot-summary/" rel="prev" title="Spring Boot使用心得">
+                Spring Boot使用心得 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#APP-服务端的-Token-验证"><span class="nav-number">1.</span> <span class="nav-text">APP 服务端的 Token 验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用别名接受对象的参数"><span class="nav-number">2.</span> <span class="nav-text">使用别名接受对象的参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关闭默认通过请求的后缀名判断-Content-Type"><span class="nav-number">3.</span> <span class="nav-text">关闭默认通过请求的后缀名判断 Content-Type</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更改默认的-Json-序列化方案"><span class="nav-number">4.</span> <span class="nav-text">更改默认的 Json 序列化方案</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#自动加密-解密请求中的-Json"><span class="nav-number">5.</span> <span class="nav-text">自动加密 / 解密请求中的 Json</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#基于注解的敏感词过滤功能"><span class="nav-number">6.</span> <span class="nav-text">基于注解的敏感词过滤功能</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#记录请求的返回内容"><span class="nav-number">7.</span> <span class="nav-text">记录请求的返回内容</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/spring-mvc-use-skill/';
+          this.page.identifier = 'spring-mvc-use-skill/';
+          this.page.title = '一些Spring MVC的使用技巧';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

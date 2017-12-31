@@ -1,0 +1,842 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="为什么需要断路器 在分布式系统中，应用之间通过 RPC 调用，这意味着一个服务的健康状态不再只与该服务所在的应用有关，还与其所依赖的所有服务有关。这将会出现两个问题：  一个服务被多个服务所依赖，如果该服务出现了故障，依赖其的服务都会受到影响 一个服务依赖多个服务，如果其中一个依赖服务出现了故障，该服务就会受到影响 也就是意味着在一整条服务的调用链路中，任何一个单元出现了故障（程序问题或是网络问题">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Armeria 学习笔记之断路器">
+<meta property="og:url" content="http://www.scienjus.com/armeria-circuit-breaker/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="为什么需要断路器 在分布式系统中，应用之间通过 RPC 调用，这意味着一个服务的健康状态不再只与该服务所在的应用有关，还与其所依赖的所有服务有关。这将会出现两个问题：  一个服务被多个服务所依赖，如果该服务出现了故障，依赖其的服务都会受到影响 一个服务依赖多个服务，如果其中一个依赖服务出现了故障，该服务就会受到影响 也就是意味着在一整条服务的调用链路中，任何一个单元出现了故障（程序问题或是网络问题">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/12/cascading_failure.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/12/fail_fast.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/12/fsm.jpg">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Armeria 学习笔记之断路器">
+<meta name="twitter:description" content="为什么需要断路器 在分布式系统中，应用之间通过 RPC 调用，这意味着一个服务的健康状态不再只与该服务所在的应用有关，还与其所依赖的所有服务有关。这将会出现两个问题：  一个服务被多个服务所依赖，如果该服务出现了故障，依赖其的服务都会受到影响 一个服务依赖多个服务，如果其中一个依赖服务出现了故障，该服务就会受到影响 也就是意味着在一整条服务的调用链路中，任何一个单元出现了故障（程序问题或是网络问题">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2016/12/cascading_failure.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/armeria-circuit-breaker/"/>
+
+
+
+
+
+  <title> Armeria 学习笔记之断路器 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/armeria-circuit-breaker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Armeria 学习笔记之断路器
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-12-24T09:28:50+08:00">
+                2016-12-24
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/armeria-circuit-breaker/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="armeria-circuit-breaker/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="为什么需要断路器"><a href="#为什么需要断路器" class="headerlink" title="为什么需要断路器"></a>为什么需要断路器</h2><p> 在分布式系统中，应用之间通过 RPC 调用，这意味着一个服务的健康状态不再只与该服务所在的应用有关，还与其所依赖的所有服务有关。这将会出现两个问题：</p>
+<ol>
+<li>一个服务被多个服务所依赖，如果该服务出现了故障，依赖其的服务都会受到影响</li>
+<li><p>一个服务依赖多个服务，如果其中一个依赖服务出现了故障，该服务就会受到影响</p>
+<p>也就是意味着在一整条服务的调用链路中，任何一个单元出现了故障（程序问题或是网络问题），都会造成连锁失败，这实际是非常不可靠的。</p>
+</li>
+</ol>
+<p><img src="/uploads/2016/12/cascading_failure.jpg" alt=""></p>
+<p> 断路器是一个基于客户端的自我保护行为，它会统计依赖服务的健康状态，在依赖服务不可靠时快速失败，而避免等待超时等行为对自身造成太大影响。</p>
+<p><img src="/uploads/2016/12/fail_fast.jpg" alt=""></p>
+<h2 id="如何实现一个断路器"><a href="#如何实现一个断路器" class="headerlink" title="如何实现一个断路器"></a>如何实现一个断路器</h2><p> 一个简单的断路器实现其实就是状态机，通过服务调用的成功、失败次数在开启和关闭之间切换。</p>
+<p> 断路器的状态有：</p>
+<ul>
+<li>关闭：所有请求都正常进行</li>
+<li>开启：阻止所有请求并快速失败</li>
+<li><p>半开启：在开启和关闭状态的中间切换状态</p>
+<p>断路器的生命周期为：</p>
+</li>
+</ul>
+<ol>
+<li>初始为关闭状态，所有请求正常执行，并统计成功、失败数</li>
+<li>当失败率高于容忍的阈值后，切换为开启状态，阻止请求执行</li>
+<li>开启状态持续一定时间后，切换为半开启状态，并通过一个请求</li>
+<li>等待该请求的结果，如果成功切换为关闭状态，失败则重新恢复为开启状态</li>
+</ol>
+<p><img src="/uploads/2016/12/fsm.jpg" alt=""></p>
+<h2 id="Armeria-源码分析"><a href="#Armeria-源码分析" class="headerlink" title="Armeria 源码分析"></a>Armeria 源码分析</h2><h3 id="断路器的设计"><a href="#断路器的设计" class="headerlink" title="断路器的设计"></a>断路器的设计</h3><p> 断路器的接口结构如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">public interface CircuitBreaker &#123;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 成功时执行该方法</span><br><span class="line">     */</span><br><span class="line">    void onSuccess ();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 失败时执行该方法</span><br><span class="line">     * @param cause 捕获的异常</span><br><span class="line">     */</span><br><span class="line"></span><br><span class="line">    void onFailure (Throwable cause);</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 失败时执行该方法</span><br><span class="line">     */</span><br><span class="line">    void onFailure ();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * 通过当前状态判断是否可以执行该次请求</span><br><span class="line">     */</span><br><span class="line"></span><br><span class="line">    boolean canRequest ();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 对请求的封装：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">// 通过断路器判断是否可以执行该次请求</span><br><span class="line">if (circuitBreaker.canRequest ()) &#123;</span><br><span class="line">    // 发起请求</span><br><span class="line">    final O response;</span><br><span class="line">    try &#123;</span><br><span class="line">        response = delegate ().execute (ctx, req);</span><br><span class="line">    &#125; catch (Throwable cause) &#123;</span><br><span class="line">        // 发生异常时，记录失败并抛出异常</span><br><span class="line">        circuitBreaker.onFailure (cause);</span><br><span class="line">        throw cause;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    response.closeFuture ().handle (voidFunction ((res, cause) -&gt; &#123;</span><br><span class="line">        // 通过请求结果记录成功、失败</span><br><span class="line">        if (cause == null) &#123;</span><br><span class="line">            circuitBreaker.onSuccess ();</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            circuitBreaker.onFailure (cause);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)).exceptionally (CompletionActions::log);</span><br><span class="line"></span><br><span class="line">    return response;</span><br><span class="line">&#125; else &#123;</span><br><span class="line">    // 如果断路器不允许进行该次请求，直接快速失败</span><br><span class="line">    throw new FailFastException (circuitBreaker);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 调用时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">try &#123;</span><br><span class="line">    productClient.getProduct (productId);</span><br><span class="line">&#125; catch (TException e) &#123;</span><br><span class="line">    // 错误处理</span><br><span class="line">&#125; catch (FailFastException e) &#123;</span><br><span class="line">    // 对于快速失败的错误，可以返回本地缓存中的值，或是准备一个默认值</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="断路器的实现"><a href="#断路器的实现" class="headerlink" title="断路器的实现"></a>断路器的实现</h3><p>Armeria 的默认断路器实现是 <code>NonBlockingCircuitBreaker</code>，通过内部维护 <code>State</code> 用于状态切换。</p>
+<p><code>canRequest</code> 实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public boolean canRequest () &#123;</span><br><span class="line">    final State currentState = state.get ();</span><br><span class="line">    if (currentState.isClosed ()) &#123;</span><br><span class="line">        // all requests are allowed during CLOSED</span><br><span class="line">        return true;</span><br><span class="line">    &#125; else if (currentState.isHalfOpen () || currentState.isOpen ()) &#123;</span><br><span class="line">        if (currentState.checkTimeout () &amp;&amp; state.compareAndSet (currentState, newHalfOpenState ())) &#123;</span><br><span class="line">            // changes to HALF_OPEN if OPEN state has timed out</span><br><span class="line">            logStateTransition (CircuitState.HALF_OPEN, null);</span><br><span class="line">            notifyStateChanged (CircuitState.HALF_OPEN);</span><br><span class="line">            return true;</span><br><span class="line">        &#125;</span><br><span class="line">        // all other requests are refused</span><br><span class="line">        notifyRequestRejected ();</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    return true;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>当前状态为关闭时，断路器对于所有请求都会返回 <code>true</code></li>
+<li>当状态为开启和半开启时，会先检查当前状态是否还在持续时间内（开启和半开启状态都有固定的持续时间），如果还在持续时间内就返回 <code>false</code></li>
+<li>如果当前状态为开启，且已经到期了，就尝试将状态改为半开启，同时返回 <code>true</code> 通过一个请求去校验服务器状态</li>
+<li>如果当前状态为半开启，且已经到期了（这种情况出现的原因只可能是之前切换状态时，通过的那个请求没有得到反馈），就清空状态，再放出一个新的请求。</li>
+</ul>
+<p><code>onSuccess</code> 实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void onSuccess () &#123;</span><br><span class="line">    final State currentState = state.get ();</span><br><span class="line">    if (currentState.isClosed ()) &#123;</span><br><span class="line">        // fires success event</span><br><span class="line">        final Optional&lt;EventCount&gt; updatedCount = currentState.counter ().onSuccess ();</span><br><span class="line">        // notifies the count if it has been updated</span><br><span class="line">        updatedCount.ifPresent (this::notifyCountUpdated);</span><br><span class="line">    &#125; else if (currentState.isHalfOpen ()) &#123;</span><br><span class="line">        // changes to CLOSED if at least one request succeeds during HALF_OPEN</span><br><span class="line">        if (state.compareAndSet (currentState, newClosedState ())) &#123;</span><br><span class="line">            logStateTransition (CircuitState.CLOSED, null);</span><br><span class="line">            notifyStateChanged (CircuitState.CLOSED);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>当前状态为关闭时统计成功数，成功事件并不会造成关闭状态的状态变更</li>
+<li>当前状态为半开启时，说明切换为半开启状态时通过的那个请求成功了，将状态切换为关闭</li>
+</ul>
+<p><code>onFailure</code> 实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void onFailure () &#123;</span><br><span class="line">    final State currentState = state.get ();</span><br><span class="line">    if (currentState.isClosed ()) &#123;</span><br><span class="line">        // fires failure event</span><br><span class="line">        final Optional&lt;EventCount&gt; updatedCount = currentState.counter ().onFailure ();</span><br><span class="line">        // checks the count if it has been updated</span><br><span class="line">        updatedCount.ifPresent (count -&gt; &#123;</span><br><span class="line">            // changes to OPEN if failure rate exceeds the threshold</span><br><span class="line">            if (checkIfExceedingFailureThreshold (count) &amp;&amp;</span><br><span class="line">                state.compareAndSet (currentState, newOpenState ())) &#123;</span><br><span class="line">                logStateTransition (CircuitState.OPEN, count);</span><br><span class="line">                notifyStateChanged (CircuitState.OPEN);</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                notifyCountUpdated (count);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125; else if (currentState.isHalfOpen ()) &#123;</span><br><span class="line">        // returns to OPEN if a request fails during HALF_OPEN</span><br><span class="line">        if (state.compareAndSet (currentState, newOpenState ())) &#123;</span><br><span class="line">            logStateTransition (CircuitState.OPEN, null);</span><br><span class="line">            notifyStateChanged (CircuitState.OPEN);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>当前状态为关闭时统计失败数，当失败率超过阈值时转换为半开启状态</li>
+<li>当前状态为半开启时，说明切换为半开启状态时通过的那个请求失败了，重新将状态切换为关闭</li>
+</ul>
+<p><code>NonBlockingCircuitBreaker</code> 使用了 <code>AtomicReference</code> 的 <code>compareAndSet</code> 方法切换状态，这样可以保证在并发时多个线程中只会有一个线程真正的切换状态，实现了非阻塞且线程安全。</p>
+<p> 在关闭状态时使用了 <code>SlidingWindowCounter</code> 的实现统计成功失败数，内部实现用 <code>LongAdder</code> 原子记录成功、失败数，并通过时间分段存储在一个 <code>ConcurrentLinkedQueue</code> 中。</p>
+<hr>
+<p> 本文是通过阅读 Armeria 源码和 Line 技术博客整理出的笔记，其中还有一些内容并没有介绍，可以移步到原文阅读：</p>
+<ul>
+<li><a href="https://github.com/line/armeria" target="_blank" rel="noopener">line / armeria</a></li>
+<li><a href="http://developers.linecorp.com/blog/?p=3882" target="_blank" rel="noopener">Circuit breakers for distributed services</a></li>
+<li><p><a href="http://developers.linecorp.com/blog/?p=3918" target="_blank" rel="noopener">Applying CircuitBreaker to Channel Gateway</a></p>
+<p>一些其他资料：</p>
+</li>
+<li><p><a href="http://coolshell.cn/articles/11454.html" target="_blank" rel="noopener">从 LongAdder 看更高效的无锁实现</a></p>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/elasticsearch-in-action-3/" rel="next" title="[Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据">
+                <i class="fa fa-chevron-left"></i> [Elasticsearch in Action读书笔记]第三章 索引、更新和删除数据
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016-year-end-review/" rel="prev" title="2016 年终总结">
+                2016 年终总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#为什么需要断路器"><span class="nav-number">1.</span> <span class="nav-text">为什么需要断路器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#如何实现一个断路器"><span class="nav-number">2.</span> <span class="nav-text">如何实现一个断路器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Armeria-源码分析"><span class="nav-number">3.</span> <span class="nav-text">Armeria 源码分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#断路器的设计"><span class="nav-number">3.1.</span> <span class="nav-text">断路器的设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#断路器的实现"><span class="nav-number">3.2.</span> <span class="nav-text">断路器的实现</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/armeria-circuit-breaker/';
+          this.page.identifier = 'armeria-circuit-breaker/';
+          this.page.title = 'Armeria 学习笔记之断路器';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

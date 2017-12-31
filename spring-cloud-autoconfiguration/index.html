@@ -1,0 +1,868 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="将公司内部分享的一个 Slide 拆解为两部分。本文是第一部分，主要介绍一下 Spring Boot AutoConfiguration 的组成和原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Cloud AutoConfiguration 简介">
+<meta property="og:url" content="http://www.scienjus.com/spring-cloud-autoconfiguration/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="将公司内部分享的一个 Slide 拆解为两部分。本文是第一部分，主要介绍一下 Spring Boot AutoConfiguration 的组成和原理。">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032215137843.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032270247665.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032279356954.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032279639040.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032299342952.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032348544518.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032355461124.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032355276952.jpg">
+<meta property="og:image" content="http://www.scienjus.com/uploads/15032352039035.jpg">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring Cloud AutoConfiguration 简介">
+<meta name="twitter:description" content="将公司内部分享的一个 Slide 拆解为两部分。本文是第一部分，主要介绍一下 Spring Boot AutoConfiguration 的组成和原理。">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/15032215137843.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/spring-cloud-autoconfiguration/"/>
+
+
+
+
+
+  <title> Spring Cloud AutoConfiguration 简介 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/spring-cloud-autoconfiguration/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Spring Cloud AutoConfiguration 简介
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-08-21T23:31:29+08:00">
+                2017-08-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/spring-cloud-autoconfiguration/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="spring-cloud-autoconfiguration/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>将公司内部分享的一个 Slide 拆解为两部分。本文是第一部分，主要介绍一下 Spring Boot AutoConfiguration 的组成和原理。</p>
+<a id="more"></a>
+<h1 id="什么是-AutoConfiguration"><a href="#什么是-AutoConfiguration" class="headerlink" title="什么是 AutoConfiguration"></a>什么是 AutoConfiguration</h1><p>Spring Boot 作为加快 Spring 项目开发的扩展框架，其中一个很重要的特性就是引入了 Starter 套件。Starter 可以在程序启动时自动初始化程序所需要的 Bean，开发者只需要关注如何使用组件本身。</p>
+<p>Spring Boot 通过 AutoConfiguration 机制使得应用可以在启动时根据引入的类和配置，自动加载配置类（Configuration），从而在这些类中初始化所需的 Spring Bean。</p>
+<p>一个完善的 AutoConfiguration 组件应该由四部分组成：</p>
+<ol>
+<li>配置类：就像开发者自己在项目中编写的一样，定义了初始化 Spring Bean 的方法。</li>
+<li>自动装载：开发者只需要引入配置类，不用像使用组件扫描（Component Scan）的方式显式的初始化配置类，避免开发者关注组件配置具体的实现。</li>
+<li>条件化加载：通过判断当前应用中引入的类库或是配置项，动态的判断项目是否需要加载某一个配置类，或是初始化某个 Bean。</li>
+<li>配置项映射：定义每个组件可以通过哪些配置项进行配置，遵从约定大于配置的原则，开发者只需要按照定义对应的值。</li>
+</ol>
+<h1 id="配置类"><a href="#配置类" class="headerlink" title="配置类"></a>配置类</h1><p>从 Spring 3 开始，开发者就可以通过 Java Config 的方式配置 Bean 了。</p>
+<p>一个最简单的配置类由 <code>@Configuration</code> 和 <code>@Bean</code> 组成，其中前者将该类声明为一个配置类，同时也作为一个 Spring 的组件以便被扫描、注入。后者作为方法上的注解可以将方法的返回值注册为 Spring Bean。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">@Configuration</span><br><span class="line">public class GsonConfiguration &#123;</span><br><span class="line"></span><br><span class="line">	@Bean</span><br><span class="line">	public Gson gson() &#123;</span><br><span class="line">		return new Gson();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Spring Boot 中的所有配置类都在 <code>spring-boot-autoconfigure</code> 项目中，在这个项目中可以看到 Spring 为每个组件定义了哪些类、初始化了哪些 Bean，以及是如何进行配置的。</p>
+<h1 id="自动装载"><a href="#自动装载" class="headerlink" title="自动装载"></a>自动装载</h1><p>对于传统的配置类，在 Spring 项目中一般都是由组件扫描（<code>@ComponentScan</code>）或是主动引入（<code>@Import</code>）的方式去进行装载。这种方式使得使用者被迫的去了解组件的配制方法和源码，极易出现配置错误等问题。</p>
+<p>而在 Spring Boot 中，则提供了具有自动装载功能的 <code>@EnableAutoConfiguration</code> 注解，只要在项目中使用了该注解（或是其作为元注解的 <code>@SpringBootApplication</code>），就会在应用启动时自动装载所有 Spring Boot 提供的配置类。</p>
+<p>其实现原理也是基于 Spring 现有的组件。</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p><img src="/uploads/15032215137843.jpg" alt=""></p>
+<p>逻辑的入口是 <code>@EnableAutoConfiguration</code>，它唯一的功能就是使用了 <code>@Import</code> 作为元注解，并引入了 <code>EnableAutoConfigurationImportSelector</code> 类。</p>
+<p><code>@Import</code> 是在 Spring 3 中作为 Java Config 功能所引入的，其最初作用是为了实现 XML 配置中 <code>&lt;import&gt;</code> 标签的功能：将多个配置引入到主配置中。所以它最开始的用途也是为了引入一些 <code>@Configuration</code> 类。</p>
+<p>其实 Java Config 的配置方式具有更强大的表现力，例如使用者可以在注解中设置不同的值，或是通过运行一段 Java 代码动态的加载不同的配置，于是在 Spring 3.1 中就引入了两个新的功能：</p>
+<ul>
+<li>配合 <code>ImportSelector</code>：通过读取注解属性，动态引入一些配置。</li>
+<li>配合 <code>ImportBeanDefinitionRegistrar</code>：通过读取注解属性，动态注册 Bean。</li>
+</ul>
+<p>其中 <code>EnableAutoConfigurationImportSelector</code> 就是一个 <code>ImportSelector</code> 的实现类。该接口只有一个方法 <code>selectImports</code>，这个方法会传入注解的元信息，最后返回需要装载的配置类的类名。</p>
+<p>在这个实现中，最终会调用 <code>SpringFactoriesLoader.loadFactoryNames</code> 加载配置类的类名。</p>
+<p><img src="/uploads/15032270247665.jpg" alt=""></p>
+<p>而 <code>SpringFactoriesLoader.loadFactoryNames</code> 则会去寻找项目中所有 <code>META-INF/spring.factories</code> 文件，并将其转化为 Properties，读取注解类名对应的值作为配置类的列表返回。</p>
+<p><img src="/uploads/15032279356954.jpg" alt=""></p>
+<p>查看 spring-boot-autoconfigure 项目，确实能发现其中包含着该文件，以及对应的配置项。</p>
+<p><img src="/uploads/15032279639040.jpg" alt=""></p>
+<p>至此可以得出一个结论，如果想要将一个配置类变为自动装载，只需要在项目中增加 <code>META-INF/spring.factories</code> 文件，并该类的类名作为 <code>ENableAutoConfiguration</code> 的值即可。</p>
+<blockquote>
+<p>这个文件不光可以定义配置类，还可以定义 <code>ApplicationListener</code> 或是 <code>ApplicationContextInitializer</code>，一样用来实现组件自动装载的功能。</p>
+</blockquote>
+<h2 id="阻止-AutoConfiguration"><a href="#阻止-AutoConfiguration" class="headerlink" title="阻止 AutoConfiguration"></a>阻止 AutoConfiguration</h2><p>阻止 AutoConfiguration 加载的方式有两种，一种是在 <code>@EnableAutoConfiguration</code> 的 <code>exclude</code> 属性中定义这个配置类的类名，另一种方式是在 <code>spring.autoconfigure.exclude</code> 配置中定义配置类的类名。一般更推荐前者，因为这种场景一般是在开发期都可以确定的。</p>
+<h1 id="条件化加载"><a href="#条件化加载" class="headerlink" title="条件化加载"></a>条件化加载</h1><p>条件化加载是在 Spring 4 中引入的新特性，而到了 Spring Boot 配合自动装载才真正发挥出其强大的功能。</p>
+<p>这个特性就是在配置类上或是某个配置 Bean 的方法上定义一系列条件。而只有这些条件满足时，这个配置类才会进行装载，或是这个方法才会被执行。</p>
+<p>在传统的 Spring 项目中，一般配置类都是由自己定义，所以基本上定义的配置类都是实际需要使用的，也就自然不需要添加额外的加载条件。</p>
+<p>而 Spring Boot 遵从约定大于配置，每一个 AutoConfiguration 都会根据项目中是否引入了必要的依赖，以及是否配置了必须的配置项决定是否加载，完美的契合了条件化加载的使用场景。</p>
+<h2 id="举例"><a href="#举例" class="headerlink" title="举例"></a>举例</h2><p><img src="/uploads/15032299342952.jpg" alt=""></p>
+<p>例如上图中初始化 Freemarker 的配置类，一共使用了 4 个条件化注解：</p>
+<ul>
+<li><code>@ConditionalOnClass</code>：指定的 Class 存在于当前 Classpath </li>
+<li><code>@ConditionalOnWebApplication</code>：是一个 Web 应用</li>
+<li><code>@ConditionalOnMissingBean</code>：指定的 Bean 不存在</li>
+<li><code>@ConditionalOnProperty</code>：指定的配置项满足条件（存在、等于某个值、不等于某个值等）</li>
+</ul>
+<h2 id="ConditionalOnClass"><a href="#ConditionalOnClass" class="headerlink" title="@ConditionalOnClass"></a>@ConditionalOnClass</h2><p>由于用户定义的配置类永远会在 AutoConfiguration 之前进行装载，所以 <code>@ConditionalOnMissingBean</code> 可以很轻易的实现使用者自定义的 Bean 替代掉自动生成的 Bean 的功能。</p>
+<h2 id="Profile"><a href="#Profile" class="headerlink" title="@Profile"></a>@Profile</h2><p>另一个比较特殊的注解是 <code>@Profile</code>，这个注解允许使用者通过 <code>spring.profiles.active</code> 来控制一些 Bean 是否初始化，或是初始化不同的实例。</p>
+<p><code>@Profile</code> 实际是在 Spring 3 就有的功能，但是在 Spring 4 条件化注解出现后，其实现也通过相关 API 进行重写了。</p>
+<h2 id="自定义条件"><a href="#自定义条件" class="headerlink" title="自定义条件"></a>自定义条件</h2><p>虽然 Spring Boot 已经提供了很多常用的条件实现，但是在某些特殊场景依旧需要自定义加载条件。</p>
+<p>所有的条件注解实现都是由 <code>@Conditional</code> 这个注解作为元注解，并指向一个 <code>Condition</code> 接口的实现类。</p>
+<p>以一个具体场景举例，在 Java 应用中开发者一般使用 Slf4j 作为通用的日志桥接，从而隐藏具体的 Log4j 或是 Logback 实现。而当需要开发与日志相关的配置类时，就需要根据不同日志实现加载相关的配置类，就需要自定义一个条件注解。</p>
+<p>首先编写一个自定义的条件注解 <code>@ConditionalOnSlf4jBinding</code>，这个注解用于指定期望 Slf4j 绑定的具体实现，在使用这个注解时可以将期望实现的类名放在 <code>value</code> 中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="line">@Target(&#123;ElementType.TYPE, ElementType.METHOD&#125;)</span><br><span class="line">@Documented</span><br><span class="line">@Conditional(OnSlf4jBindingCondition.class)</span><br><span class="line">public @interface ConditionalOnSlf4jBinding &#123;</span><br><span class="line"></span><br><span class="line">  String value();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>同时按照规范，这个注解使用了 <code>@Conditional</code> 作为元注解，并指向了 <code>OnSlf4jBindingCondition</code>。这个类是一个 <code>SpringBootCondition</code> 的实现类，通过调用 Slf4j 的方法获取当前绑定的日志实现，并查看是否与期望值相同：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">public class OnSlf4jBindingCondition extends SpringBootCondition &#123;</span><br><span class="line"></span><br><span class="line">  @Override</span><br><span class="line">  public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) &#123;</span><br><span class="line">    String bindingClassName = attribute(metadata, &quot;value&quot;);</span><br><span class="line">    StaticLoggerBinder binder = StaticLoggerBinder.getSingleton();</span><br><span class="line">    String loggerFactoryClassName = binder.getLoggerFactoryClassStr();</span><br><span class="line"></span><br><span class="line">    return new ConditionOutcome(</span><br><span class="line">        loggerFactoryClassName.equals(bindingClassName),</span><br><span class="line">        String.format(&quot;Binding: %s, logger factory: %s&quot;, bindingClassName, loggerFactoryClassName));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  private static String attribute(AnnotatedTypeMetadata metadata, String name) &#123;</span><br><span class="line">    return (String) metadata.getAnnotationAttributes(ConditionalOnSlf4jBinding.class.getName()).get(name);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用时就像这样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">@ConditionalOnSlf4jBinding(&quot;ch.qos.logback.classic.util.ContextSelectorStaticBinder&quot;)</span><br><span class="line">public class LogbackSentryAppenderInitializer &#123;</span><br><span class="line">  // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>或是更进一步的枚举出所有日志实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@Retention(RetentionPolicy.RUNTIME)</span><br><span class="line">@Target(&#123;ElementType.TYPE, ElementType.METHOD&#125;)</span><br><span class="line">@Documented</span><br><span class="line">@ConditionalOnSlf4jBinding(&quot;ch.qos.logback.classic.util.ContextSelectorStaticBinder&quot;)</span><br><span class="line">public @interface ConditionalOnLogbackBinding &#123;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>使用时会更加简单：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">@ConditionalOnLogbackBinding</span><br><span class="line">public class LogbackSentryAppenderInitializer &#123;</span><br><span class="line">  // ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="加载状态"><a href="#加载状态" class="headerlink" title="加载状态"></a>加载状态</h2><p>配置 <code>debug</code> 属性启动 Spring Boot 应用时，会打印一系列 AUTO-CONFIGURATION REPORT 的记录。</p>
+<p>在这个记录中首先会把所有 AutoConfiguration 分为两组，一组为命中条件自动加载，另一组为未命中条件不进行自动加载。在这个报告中开发者可以很清晰的看到当前应用中每一个配置类因为满足/不满足某些条件最终会/不会被自动加载。</p>
+<p><img src="/uploads/15032348544518.jpg" alt=""></p>
+<h1 id="配置项映射"><a href="#配置项映射" class="headerlink" title="配置项映射"></a>配置项映射</h1><p>在配置文件中定义属性是 AutoConfiguration 唯一与使用者相关的功能。</p>
+<p>一般在普通的应用开发中，开发者一般会使用 <code>@Value</code> 注入配置文件中的值。而在定义配置类时，更好的做法是定义一个与配置文件映射的 Model，并通过 <code>@ConfigurationProperties</code> 进行标识。</p>
+<p><img src="/uploads/15032355461124.jpg" alt=""></p>
+<p>而当 Configuration 装载时，可以使用 <code>@EnableConfigurationProperties</code> 将对应的配置类引入，会自动注册为 Spring Bean。</p>
+<p><img src="/uploads/15032355276952.jpg" alt=""></p>
+<p>使用这种做法的好处有很多：</p>
+<ul>
+<li>结构化配置：支持 List、Map、URL 等复杂类型以及嵌套 Model 的映射。</li>
+<li>校验：可以通过和 Hibernate Validator 等校验组件结合，通过注解进行自动校验。</li>
+<li>热刷新支持：在 Spring Cloud 环境下可以在应用运行中刷新绑定的配置项。</li>
+<li>配置文件提示：Spring Boot 提供了 <code>spring-configuration-metadata.json</code> 用来描述配置项，配合 IDE 可以在编写配置文件时有提示。</li>
+</ul>
+<p><img src="/uploads/15032352039035.jpg" alt=""></p>
+<blockquote>
+<p><code>@Value</code> 实际也是支持热刷新的，但是必须定义为 <code>@RefreshScope</code>，而且实现也有不同，理论上 <code>@ConfigurationProperties</code> 的热刷新更加轻量级。</p>
+<p>使用 <code>spring-boot-configuration-processor</code> 依赖可以在编译时扫描项目中的 <code>@ConfigurationProperties</code> 类，并自动生成 <code>spring-configuration-metadata.json</code> 文件。</p>
+</blockquote>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/spring-cloud-refresh/" rel="next" title="Spring Cloud 是如何实现热更新的">
+                <i class="fa fa-chevron-left"></i> Spring Cloud 是如何实现热更新的
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017-year-end-review/" rel="prev" title="2017 年终总结">
+                2017 年终总结 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#什么是-AutoConfiguration"><span class="nav-number">1.</span> <span class="nav-text">什么是 AutoConfiguration</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置类"><span class="nav-number">2.</span> <span class="nav-text">配置类</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#自动装载"><span class="nav-number">3.</span> <span class="nav-text">自动装载</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#原理"><span class="nav-number">3.1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#阻止-AutoConfiguration"><span class="nav-number">3.2.</span> <span class="nav-text">阻止 AutoConfiguration</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#条件化加载"><span class="nav-number">4.</span> <span class="nav-text">条件化加载</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#举例"><span class="nav-number">4.1.</span> <span class="nav-text">举例</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConditionalOnClass"><span class="nav-number">4.2.</span> <span class="nav-text">@ConditionalOnClass</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Profile"><span class="nav-number">4.3.</span> <span class="nav-text">@Profile</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#自定义条件"><span class="nav-number">4.4.</span> <span class="nav-text">自定义条件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#加载状态"><span class="nav-number">4.5.</span> <span class="nav-text">加载状态</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#配置项映射"><span class="nav-number">5.</span> <span class="nav-text">配置项映射</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/spring-cloud-autoconfiguration/';
+          this.page.identifier = 'spring-cloud-autoconfiguration/';
+          this.page.title = 'Spring Cloud AutoConfiguration 简介';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

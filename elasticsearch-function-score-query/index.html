@@ -1,0 +1,884 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="在使用 Elasticsearch 进行全文搜索时，搜索结果默认会以文档的相关度进行排序，如果想要改变默认的排序规则，也可以通过sort指定一个或多个排序字段。  但是使用sort排序过于绝对，它会直接忽略掉文档本身的相关度（根本不会去计算）。在很多时候这样做的效果并不好，这时候就需要对多个字段进行综合评估，得出一个最终的排序。 function\_score 在 Elasticsearch 中f">
+<meta property="og:type" content="article">
+<meta property="og:title" content="通过Function Score Query优化Elasticsearch搜索结果">
+<meta property="og:url" content="http://www.scienjus.com/elasticsearch-function-score-query/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="在使用 Elasticsearch 进行全文搜索时，搜索结果默认会以文档的相关度进行排序，如果想要改变默认的排序规则，也可以通过sort指定一个或多个排序字段。  但是使用sort排序过于绝对，它会直接忽略掉文档本身的相关度（根本不会去计算）。在很多时候这样做的效果并不好，这时候就需要对多个字段进行综合评估，得出一个最终的排序。 function\_score 在 Elasticsearch 中f">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2016/04/decay-function.png">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="通过Function Score Query优化Elasticsearch搜索结果">
+<meta name="twitter:description" content="在使用 Elasticsearch 进行全文搜索时，搜索结果默认会以文档的相关度进行排序，如果想要改变默认的排序规则，也可以通过sort指定一个或多个排序字段。  但是使用sort排序过于绝对，它会直接忽略掉文档本身的相关度（根本不会去计算）。在很多时候这样做的效果并不好，这时候就需要对多个字段进行综合评估，得出一个最终的排序。 function\_score 在 Elasticsearch 中f">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2016/04/decay-function.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/elasticsearch-function-score-query/"/>
+
+
+
+
+
+  <title> 通过Function Score Query优化Elasticsearch搜索结果 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/elasticsearch-function-score-query/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                通过Function Score Query优化Elasticsearch搜索结果
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-06T08:33:23+08:00">
+                2016-04-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/elasticsearch-function-score-query/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="elasticsearch-function-score-query/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在使用 Elasticsearch 进行全文搜索时，搜索结果默认会以文档的相关度进行排序，如果想要改变默认的排序规则，也可以通过<code>sort</code>指定一个或多个排序字段。</p>
+<p> 但是使用<code>sort</code>排序过于绝对，它会直接忽略掉文档本身的相关度（根本不会去计算）。在很多时候这样做的效果并不好，这时候就需要对多个字段进行综合评估，得出一个最终的排序。</p>
+<h3 id="function-score"><a href="#function-score" class="headerlink" title="function\_score"></a>function\_score</h3><p> 在 Elasticsearch 中<code>function_score</code>是用于处理文档分值的 DSL，它会在查询结束后对每一个匹配的文档进行一系列的重打分操作，最后以生成的最终分数进行排序。它提供了几种默认的计算分值的函数：</p>
+<ul>
+<li><code>weight</code>：设置权重</li>
+<li><code>field_value_factor</code>：将某个字段的值进行计算得出分数。</li>
+<li><code>random_score</code>：随机得到 0 到 1 分数</li>
+<li>衰减函数：同样以某个字段的值为标准，距离某个值越近得分越高</li>
+<li><p><code>script_score</code>：通过自定义脚本计算分值</p>
+<p>它还有一个属性<code>boost_mode</code>可以指定计算后的分数与原始的<code>_score</code>如何合并，有以下选项：</p>
+</li>
+<li><p><code>multiply</code>：将结果乘以<code>_score</code></p>
+</li>
+<li><code>sum</code>：将结果加上<code>_score</code></li>
+<li><code>min</code>：取结果与<code>_score</code>的较小值</li>
+<li><code>max</code>：取结果与<code>_score</code>的较大值</li>
+<li><p><code>replace</code>：使结果替换掉<code>_score</code></p>
+<p>接下来本文将详细介绍这些函数的用法，以及它们的使用场景。</p>
+</li>
+</ul>
+<h3 id="weight"><a href="#weight" class="headerlink" title="weight"></a>weight</h3><p>weight 的用法最为简单，只需要设置一个数字作为权重，文档的分数就会乘以该权重。</p>
+<p> 他最大的用途应该就是和过滤器一起使用了，因为过滤器只会筛选出符合标准的文档，而不会去详细的计算每个文档的具体得分，所以只要满足条件的文档的分数都是 1，而 weight 可以将其更换为你想要的数值。</p>
+<h3 id="field-value-factor"><a href="#field-value-factor" class="headerlink" title="field\_value\_factor"></a>field\_value\_factor</h3><p>field\_value\_factor 的目的是通过文档中某个字段的值计算出一个分数，它有以下属性：</p>
+<ul>
+<li><p><code>field</code>：指定字段名</p>
+</li>
+<li></li>
+</ul>
+<p><code>factor</code>：对字段值进行预处理，乘以指定的数值（默认为 1）</p>
+<ul>
+<li><p><code>modifier</code>将字段值进行加工，有以下的几个选项：</p>
+<ul>
+<li><code>none</code>：不处理</li>
+<li><code>log</code>：计算对数</li>
+<li><code>log1p</code>：先将字段值 +1，再计算对数</li>
+<li><code>log2p</code>：先将字段值 +2，再计算对数</li>
+<li><code>ln</code>：计算自然对数</li>
+<li><code>ln1p</code>：先将字段值 +1，再计算自然对数</li>
+<li><code>ln2p</code>：先将字段值 +2，再计算自然对数</li>
+<li><code>square</code>：计算平方</li>
+<li><code>sqrt</code>：计算平方根</li>
+<li><code>reciprocal</code>：计算倒数</li>
+</ul>
+<p>举一个简单的例子，假设有一个商品索引，搜索时希望在相关度排序的基础上，销量（<code>sales</code>）更高的商品能排在靠前的位置，那么这条查询 DSL 可以是这样的：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;title&quot;: &quot;雨伞&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;field_value_factor&quot;: &#123;</span><br><span class="line">        &quot;field&quot;: &quot;sales&quot;,</span><br><span class="line">        &quot;modifier&quot;: &quot;log1p&quot;,</span><br><span class="line">        &quot;factor&quot;: 0.1</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;boost_mode&quot;: &quot;sum&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这条查询会将标题中带有雨伞的商品检索出来，然后对这些文档计算一个与库存相关的分数，并与之前相关度的分数相加，对应的公式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_score = _score + log (1 + 0.1 * sales)</span><br></pre></td></tr></table></figure>
+<h3 id="random-score"><a href="#random-score" class="headerlink" title="random\_score"></a>random\_score</h3><p> 这个函数的使用相当简单，只需要调用一下就可以返回一个 0 到 1 的分数。</p>
+<p> 它有一个非常有用的特性是可以通过<code>seed</code>属性设置一个随机种子，该函数保证在随机种子相同时返回值也相同，这点使得它可以轻松地实现对于用户的个性化推荐。</p>
+<h3 id="衰减函数"><a href="#衰减函数" class="headerlink" title="衰减函数"></a>衰减函数</h3><p> 衰减函数（Decay Function）提供了一个更为复杂的公式，它描述了这样一种情况：对于一个字段，它有一个理想的值，而字段实际的值越偏离这个理想值（无论是增大还是减小），就越不符合期望。这个函数可以很好的应用于数值、日期和地理位置类型，由以下属性组成：</p>
+<ul>
+<li>原点（<code>origin</code>）：该字段最理想的值，这个值可以得到满分（1.0）</li>
+<li>偏移量（<code>offset</code>）：与原点相差在偏移量之内的值也可以得到满分</li>
+<li>衰减规模（<code>scale</code>）：当值超出了原点到偏移量这段范围，它所得的分数就开始进行衰减了，衰减规模决定了这个分数衰减速度的快慢</li>
+<li><p>衰减值（<code>decay</code>）：该字段可以被接受的值（默认为 0.5），相当于一个分界点，具体的效果与衰减的模式有关</p>
+<p>例如我们想要买一样东西：</p>
+</li>
+<li><p>它的理想价格是 50 元，这个值为原点</p>
+</li>
+<li>但是我们不可能非 50 元就不买，而是会划定一个可接受的价格范围，例如 45-55 元，±5 就为偏移量</li>
+<li><p>当价格超出了可接受的范围，就会让人觉得越来越不值。如果价格是 70 元，评价可能是<q>不太想买</q>，而如果价格是 200 元，评价则会是<q>不可能会买</q>，这就是由衰减规模和衰减值所组成的一条衰减曲线</p>
+<p>或者如果我们想租一套房：</p>
+</li>
+<li><p>它的理想位置是公司附近</p>
+</li>
+<li>如果离公司在 5km 以内，是我们可以接受的范围，在这个范围内我们不去考虑距离，而是更偏向于其他信息</li>
+<li><p>当距离超过 5km 时，我们对这套房的评价就越来越低了，直到超出了某个范围就再也不会考虑了</p>
+<p>衰减函数还可以指定三种不同的模式：线性函数（linear）、以 e 为底的指数函数（Exp）和高斯函数（gauss），它们拥有不同的衰减曲线：</p>
+</li>
+</ul>
+<p><img src="/uploads/2016/04/decay-function.png" alt="衰减曲线"></p>
+<p> 将上面提到的租房用 DSL 表示就是：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;title&quot;: &quot;公寓&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;gauss&quot;: &#123;</span><br><span class="line">        &quot;location&quot;: &#123;</span><br><span class="line">          &quot;origin&quot;: &#123; &quot;lat&quot;: 40, &quot;lon&quot;: 116 &#125;,</span><br><span class="line">          &quot;offset&quot;: &quot;5km&quot;,</span><br><span class="line">          &quot;scale&quot;: &quot;10km&quot;</span><br><span class="line">           &#125;</span><br><span class="line">         &#125;,</span><br><span class="line">         &quot;boost_mode&quot;: &quot;sum&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 我们希望租房的位置在<code>40, 116</code>坐标附近，<code>5km</code>以内是满意的距离，<code>15km</code>以内是可以接受的距离。</p>
+<h3 id="script-score"><a href="#script-score" class="headerlink" title="script\_score"></a>script\_score</h3><p> 虽然强大的 field\_value\_factor 和衰减函数已经可以解决大部分问题了，但是也可以看出它们还有一定的局限性：</p>
+<ol>
+<li>这两种方式都只能针对一个字段计算分值</li>
+<li><p>这两种方式应用的字段类型有限，field\_value\_factor 一般只用于数字类型，而衰减函数一般只用于数字、位置和时间类型</p>
+<p>这时候就需要 script\_score 了，它支持我们自己编写一个脚本运行，在该脚本中我们可以拿到当前文档的所有字段信息，并且只需要将计算的分数作为返回值传回 Elasticsearch 即可。</p>
+<p>注：使用脚本需要首先在配置文件中打开相关功能：</p>
+</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">script.groovy.sandbox.enabled: true</span><br><span class="line">script.inline: on</span><br><span class="line">script.indexed: on</span><br><span class="line">script.search: on</span><br><span class="line">script.engine.groovy.inline.aggs: on</span><br></pre></td></tr></table></figure>
+<p> 举一个之前做不到的例子，假如我们有一个位置索引，它有一个分类（<code>category</code>）属性，该属性是字符串枚举类型，例如商场、电影院或者餐厅等。现在由于我们有一个电影相关的活动，所以需要将电影院在搜索列表中的排位相对靠前。</p>
+<p> 之前的两种方式都无法给字符串打分，但是如果我们自己写脚本的话却很简单，使用 Groovy（Elasticsearch 的默认脚本语言）也就是一行的事：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">return doc [&apos;category&apos;].value == &apos;电影院&apos; ? 1.1 : 1.0</span><br></pre></td></tr></table></figure>
+<p> 接下来只要将这个脚本配置到查询语句中就可以了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;name&quot;: &quot;天安门&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;script_score&quot;: &#123;</span><br><span class="line">        &quot;script&quot;: &quot;return doc [&apos;category&apos;].value == &apos;电影院&apos; ? 1.1 : 1.0&quot;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 或是将脚本放在<code>elasticsearch/config/scripts</code>下，然后在查询语句中引用它：</p>
+<p>category-score.groovy：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">return doc [&apos;category&apos;].value == &apos;电影院&apos; ? 1.1 : 1.0</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;name&quot;: &quot;天安门&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;script_score&quot;: &#123;</span><br><span class="line">        &quot;script&quot;: &#123;</span><br><span class="line">         &quot;file&quot;: &quot;category-score&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 在<code>script</code>中还可以通过<code>params</code>属性向脚本传值，所以为了解除耦合，上面的 DSL 还能接着改写为：</p>
+<p>category-score.groovy：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">return doc [&apos;category&apos;].value == recommend_category ? 1.1 : 1.0</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;name&quot;: &quot;天安门&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;script_score&quot;: &#123;</span><br><span class="line">        &quot;script&quot;: &#123;</span><br><span class="line">         &quot;file&quot;: &quot;category-score&quot;,</span><br><span class="line">         &quot;params&quot;: &#123;</span><br><span class="line">            &quot;recommend_category&quot;: &quot;电影院&quot;</span><br><span class="line">         &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这样就可以在不更改大部分查询语句和脚本的基础上动态修改推荐的位置类别了。</p>
+<h3 id="同时使用多个函数"><a href="#同时使用多个函数" class="headerlink" title="同时使用多个函数"></a>同时使用多个函数</h3><p> 上面的例子都只是调用某一个函数并与查询得到的<code>_score</code>进行合并处理，而在实际应用中肯定会出现在多个点上计算分值并合并，虽然脚本也许可以解决这个问题，但是应该没人愿意维护一个复杂的脚本吧。这时候通过多个函数将每个分值都计算出在合并才是更好的选择。</p>
+<p> 在 function\_score 中可以使用<code>functions</code>属性指定多个函数。它是一个数组，所以原有函数不需要发生改动。同时还可以通过<code>score_mode</code>指定各个函数分值之间的合并处理，值跟最开始提到的<code>boost_mode</code>相同。下面举两个例子介绍一些多个函数混用的场景。</p>
+<p> 第一个例子是类似于大众点评的餐厅应用。该应用希望向用户推荐一些不错的餐馆，特征是：范围要在当前位置的 5km 以内，有停车位是最重要的，有 Wi-Fi 更好，餐厅的评分（1 分到 5 分）越高越好，并且对不同用户最好展示不同的结果以增加随机性。</p>
+<p> 那么它的查询语句应该是这样的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;filter&quot;: &#123;</span><br><span class="line">        &quot;geo_distance&quot;: &#123;</span><br><span class="line">          &quot;distance&quot;: &quot;5km&quot;,</span><br><span class="line">          &quot;location&quot;: &#123;</span><br><span class="line">            &quot;lat&quot;: $lat,</span><br><span class="line">            &quot;lon&quot;: $lng</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;functions&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;filter&quot;: &#123;</span><br><span class="line">            &quot;term&quot;: &#123;</span><br><span class="line">              &quot;features&quot;: &quot;wifi&quot;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          &quot;weight&quot;: 1</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;filter&quot;: &#123;</span><br><span class="line">            &quot;term&quot;: &#123;</span><br><span class="line">              &quot;features&quot;: &quot;停车位&quot;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          &quot;weight&quot;: 2</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;field_value_factor&quot;: &#123;</span><br><span class="line">               &quot;field&quot;: &quot;score&quot;,</span><br><span class="line">               &quot;factor&quot;: 1.2</span><br><span class="line">             &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;random_score&quot;: &#123;</span><br><span class="line">            &quot;seed&quot;: &quot;$id&quot;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      ],</span><br><span class="line">      &quot;score_mode&quot;: &quot;sum&quot;,</span><br><span class="line">      &quot;boost_mode&quot;: &quot;multiply&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 注：其中所有以<code>$</code>开头的都是变量。</p>
+<p> 这样一个饭馆的最高得分应该是 2 分（有停车位）+ 1 分（有 wifi）+ 6 分（评分 5 分 \* 1.2）+ 1 分（随机评分）。</p>
+<p> 另一个例子是类似于新浪微博的社交网站。现在要优化搜索功能，使其以文本相关度排序为主，但是越新的微博会排在相对靠前的位置，点赞（忽略相同计算方式的转发和评论）数较高的微博也会排在较前面。如果这篇微博购买了推广并且是创建不到 24 小时（同时满足），它的位置会非常靠前。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;query&quot;: &#123;</span><br><span class="line">    &quot;function_score&quot;: &#123;</span><br><span class="line">      &quot;query&quot;: &#123;</span><br><span class="line">        &quot;match&quot;: &#123;</span><br><span class="line">          &quot;content&quot;: &quot;$text&quot;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;,</span><br><span class="line">      &quot;functions&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;gauss&quot;: &#123;</span><br><span class="line">            &quot;createDate&quot;: &#123;</span><br><span class="line">              &quot;origin&quot;: &quot;$now&quot;,</span><br><span class="line">              &quot;scale&quot;: &quot;6d&quot;,</span><br><span class="line">              &quot;offset&quot;: &quot;1d&quot;</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;field_value_factor&quot;: &#123;</span><br><span class="line">            &quot;field&quot;: &quot;like_count&quot;,</span><br><span class="line">            &quot;modifier&quot;: &quot;log1p&quot;,</span><br><span class="line">            &quot;factor&quot;: 0.1</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          &quot;script_score&quot;: &#123;</span><br><span class="line">            &quot;script&quot;: &quot;return doc [&apos;is_recommend&apos;].value &amp;&amp; doc [&apos;create_date&apos;] &gt; time ? 1.5 : 1.0&quot;,</span><br><span class="line">            params: &#123;</span><br><span class="line">                &quot;time&quot;: $time</span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      ],</span><br><span class="line">      &quot;boost_mode&quot;: &quot;multiply&quot;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 它的公式为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_score * gauss (create_date, $now, &quot;1d&quot;, &quot;6d&quot;) * log (1 + 0.1 * like_count) * is_recommend ? 1.5 : 1.0</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/fastroute-spring/" rel="next" title="使用FastRoute重写Spring的路由">
+                <i class="fa fa-chevron-left"></i> 使用FastRoute重写Spring的路由
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/elasticsearch-in-action-1/" rel="prev" title="[Elasticsearch in Action读书笔记]第一章 Elasticsearch介绍">
+                [Elasticsearch in Action读书笔记]第一章 Elasticsearch介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#function-score"><span class="nav-number">1.</span> <span class="nav-text">function\_score</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#weight"><span class="nav-number">2.</span> <span class="nav-text">weight</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#field-value-factor"><span class="nav-number">3.</span> <span class="nav-text">field\_value\_factor</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#random-score"><span class="nav-number">4.</span> <span class="nav-text">random\_score</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#衰减函数"><span class="nav-number">5.</span> <span class="nav-text">衰减函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#script-score"><span class="nav-number">6.</span> <span class="nav-text">script\_score</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#同时使用多个函数"><span class="nav-number">7.</span> <span class="nav-text">同时使用多个函数</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/elasticsearch-function-score-query/';
+          this.page.identifier = 'elasticsearch-function-score-query/';
+          this.page.title = '通过Function Score Query优化Elasticsearch搜索结果';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

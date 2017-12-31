@@ -1,0 +1,867 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="不要纠结于无意义的规范 在开始本文之前，我想先说这么一句：RESTful 真的很好，但它只是一种软件架构风格，过度纠结如何遵守规范只是徒增烦恼，也违背了使用它的初衷。  就像 Elasticsearch 的 API 会在 GET 请求中直接传 JSON，但这是它的业务需要，因为普通的 Query Param 根本无法构造如此复杂的查询 DSL。Github 的 V3 API 中也有很多不符合标准的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我所认为的RESTful API最佳实践">
+<meta property="og:url" content="http://www.scienjus.com/my-restful-api-best-practices/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="不要纠结于无意义的规范 在开始本文之前，我想先说这么一句：RESTful 真的很好，但它只是一种软件架构风格，过度纠结如何遵守规范只是徒增烦恼，也违背了使用它的初衷。  就像 Elasticsearch 的 API 会在 GET 请求中直接传 JSON，但这是它的业务需要，因为普通的 Query Param 根本无法构造如此复杂的查询 DSL。Github 的 V3 API 中也有很多不符合标准的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="我所认为的RESTful API最佳实践">
+<meta name="twitter:description" content="不要纠结于无意义的规范 在开始本文之前，我想先说这么一句：RESTful 真的很好，但它只是一种软件架构风格，过度纠结如何遵守规范只是徒增烦恼，也违背了使用它的初衷。  就像 Elasticsearch 的 API 会在 GET 请求中直接传 JSON，但这是它的业务需要，因为普通的 Query Param 根本无法构造如此复杂的查询 DSL。Github 的 V3 API 中也有很多不符合标准的">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/my-restful-api-best-practices/"/>
+
+
+
+
+
+  <title> 我所认为的RESTful API最佳实践 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/my-restful-api-best-practices/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                我所认为的RESTful API最佳实践
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-04-03T09:45:03+08:00">
+                2016-04-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/my-restful-api-best-practices/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="my-restful-api-best-practices/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="不要纠结于无意义的规范"><a href="#不要纠结于无意义的规范" class="headerlink" title="不要纠结于无意义的规范"></a>不要纠结于无意义的规范</h3><p> 在开始本文之前，我想先说这么一句：RESTful 真的很好，但它只是一种软件架构风格，过度纠结如何遵守规范只是徒增烦恼，也违背了使用它的初衷。</p>
+<p> 就像 Elasticsearch 的 API 会在 GET 请求中直接传 JSON，但这是它的业务需要，因为普通的 Query Param 根本无法构造如此复杂的查询 DSL。Github 的 V3 API 中也有很多不符合标准的地方，这也并不会妨碍它成为业界 RESTful API 的参考标准。</p>
+<p> 我接下来要介绍的一些东西也会跟标准不符，但这是我在实际开发中遇到过、困扰过、思考过所得出的结论，所以才是<q>我所认为的</q>RESTful API 最佳实践。</p>
+<h3 id="为什么要用-RESTful"><a href="#为什么要用-RESTful" class="headerlink" title="为什么要用 RESTful"></a>为什么要用 RESTful</h3><p>RESTful 给我的最大感觉就是规范、易懂和优雅，一个结构清晰、易于理解的 API 完全可以省去许多无意义的沟通和文档。并且 RESTful 现在越来越流行，也有越来越多优秀的周边工具（例如文档工具 Swagger）。</p>
+<h3 id="协议"><a href="#协议" class="headerlink" title="协议"></a>协议</h3><p> 如果能全站 HTTPS 当然是最好的，不能的话也请尽量将登录、注册等涉及密码的接口使用 HTTPS。</p>
+<h3 id="版本"><a href="#版本" class="headerlink" title="版本"></a>版本</h3><p>API 的版本号和客户端 APP 的版本号是毫无关系的，不要让 APP 将它们用于提交应用市场的版本号传递到服务器，而是提供类似于<code>v1</code>、<code>v2</code>之类的 API 版本号。版本号只允许枚举，不允许判断区间。</p>
+<p> 版本号拼接在 URL 中或是放在 Header 中都可以。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">api.xxx.com/v1/users</span><br></pre></td></tr></table></figure>
+<p> 或：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">api.xxx.com/users</span><br><span class="line"></span><br><span class="line">version=v1</span><br></pre></td></tr></table></figure>
+<h3 id="请求"><a href="#请求" class="headerlink" title="请求"></a>请求</h3><p> 一般来说 API 的外在形式无非就是增删改查（当然具体的业务逻辑肯定要复杂得多），而查询又分为详情和列表两种，在 RESTful 中这就相当于通用的模板。例如针对文章（Article）设计 API，那么最基础的 URL 就是这几种：</p>
+<ul>
+<li><code>GET /articles</code>： 文章列表</li>
+<li><code>GET /articles/id</code>：文章详情</li>
+<li><code>POST /articles/</code>： 创建文章</li>
+<li><code>PUT /articles/id</code>：修改文章</li>
+<li><code>DELETE /articles/id</code>：删除文章</li>
+</ul>
+<p>RESTful 中使用 GET、POST、PUT 和 DELETE 来表示资源的查询、创建、更改、删除，并且除了 POST 其他三种请求都具备幂等性（多次请求的效果相同）。需要注意的是 POST 和 PUT 最大的区别就是幂等性，所以 PUT 也可以用于创建操作，只要在创建前就可以确定资源的 id。</p>
+<p> 将 id 放在 URL 中而不是 Query Param 的其中一个好处是可以表示资源之间的层级关系，例如文章下面会有评论（Comment）和点赞（Like），这两项资源必然会属于一篇文章，所以它们的 URL 应该是这样的：</p>
+<p> 评论：</p>
+<ul>
+<li><code>GET /articles/aid/comments</code>： 某篇文章的评论列表</li>
+<li><code>GET /comments/cid</code>： 获取</li>
+<li><code>POST /articles/aid/comments</code>： 在某篇文章中创建评论</li>
+<li><code>PUT /comments/cid</code>： 修改评论</li>
+<li><p><code>DELETE /comments/cid</code>： 删除评论</p>
+<p>这里有一点比较特殊，永远去使用可以指向资源的的最短 URL 路径，也就是说既然<code>/comments/cid</code>已经可以指向一条评论了，就不需要再用<code>/articles/aid/comments/cid</code>特意的指出所属文章了。</p>
+<p>点赞：</p>
+</li>
+<li><p><code>GET /articles/id/like</code>：查看文章是否被点赞</p>
+</li>
+<li><code>PUT /articles/id/like</code>：点赞文章</li>
+<li><code>DELETE /articles/id/like</code>：取消点赞</li>
+</ul>
+<p>RESTful 中不建议出现动词，所以可以将这种关系作为资源来映射。并且由于大部分的关系查询都与当前的登录用户有关，所以也可以直接在关系所属的资源中返回关系状态。例如点赞状态就可以直接在获取文章详情时返回。注意这里我选择了 PUT 而不是 POST，因为我觉得点赞这种行为应该是幂等的，多次操作的结果应该相同。</p>
+<h3 id="Token-和-Sign"><a href="#Token-和-Sign" class="headerlink" title="Token 和 Sign"></a>Token 和 Sign</h3><p>API 需要设计成无状态，所以客户端在每次请求时都需要提供有效的 Token 和 Sign，在我看来它们的用途分别是：</p>
+<ul>
+<li>Token 用于证明请求所属的用户，一般都是服务端在登录后随机生成一段字符串（UUID）和登录用户进行绑定，再将其返回给客户端。Token 的状态保持一般有两种方式实现：一种是在用户每次操作都会延长或重置 TOKEN 的生存时间（类似于缓存的机制），另一种是 Token 的生存时间固定不变，但是同时返回一个刷新用的 Token，当 Token 过期时可以将其刷新而不是重新登录。</li>
+<li>Sign 用于证明该次请求合理，所以一般客户端会把请求参数拼接后并加密作为 Sign 传给服务端，这样即使被抓包了，对方只修改参数而无法生成对应的 Sign 也会被服务端识破。当然也可以将时间戳、请求地址和 Token 也混入 Sign，这样 Sign 也拥有了所属人、时效性和目的地。</li>
+</ul>
+<h3 id="统计性参数"><a href="#统计性参数" class="headerlink" title="统计性参数"></a>统计性参数</h3><p> 我不太清楚这类参数具体该被称为什么，总之就是用户的各种隐私【误。类似于经纬度、手机系统、型号、IMEI、网络状态、客户端版本、渠道等，这些参数会经常收集然后用作运营、统计等平台，但是在大部分情况下他们是与业务无关的。这类参数变化不频繁的可以在登录时提交，变化比较频繁的可以用轮训或是在其他请求中附加提交。</p>
+<h3 id="业务参数"><a href="#业务参数" class="headerlink" title="业务参数"></a>业务参数</h3><p> 在 RESTful 的标准中，PUT 和 PATCH 都可以用于修改操作，它们的区别是 PUT 需要提交整个对象，而 PATCH 只需要提交修改的信息。但是在我看来实际应用中不需要这么麻烦，所以我一律使用 PUT，并且只提交修改的信息。</p>
+<p> 另一个问题是在 POST 创建对象时，究竟该用表单提交更好些还是用 JSON 提交更好些。其实两者都可以，在我看来它们唯一的区别是 JSON 可以比较方便的表示更为复杂的结构（有嵌套对象）。另外无论使用哪种，请保持统一，不要两者混用。</p>
+<p> 还有一个建议是最好将过滤、分页和排序的相关信息全权交给客户端，包括过滤条件、页数或是游标、每页的数量、排序方式、升降序等，这样可以使 API 更加灵活。但是对于过滤条件、排序方式等，不需要支持所有方式，只需要支持目前用得上的和以后可能会用上的方式即可，并通过字符串枚举解析，这样可见性要更好些。例如：</p>
+<p> 搜索，客户端只提供关键词，具体搜索的字段，和搜索方式（前缀、全文、精确）由服务端决定：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/users/?query=ScienJus</span><br></pre></td></tr></table></figure>
+<p> 过滤，只需要对已有的情况进行支持：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/users/?gender=1</span><br></pre></td></tr></table></figure>
+<p> 对于某些特定且复杂的业务逻辑，不要试图让客户端用复杂的查询参数表示，而是在 URL 使用别名：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/users/recommend</span><br></pre></td></tr></table></figure>
+<p> 分页：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/users/?offset=10&amp;limit=10</span><br><span class="line"></span><br><span class="line">/articles/?cursor=2015-01-01 15:20:30&amp;limit=10</span><br><span class="line"></span><br><span class="line">/users/?page=2&amp;pre_page=20</span><br></pre></td></tr></table></figure>
+<p> 排序，只需要对已有的情况进行支持：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/articles/sort=-create_date</span><br></pre></td></tr></table></figure>
+<p>PS：我很喜欢这种在字段名前面加<code>-</code>表示降序排列的方式。</p>
+<h3 id="响应"><a href="#响应" class="headerlink" title="响应"></a>响应</h3><p> 尽量使用 HTTP 状态码，常用的有：</p>
+<ul>
+<li>200：请求成功</li>
+<li>201：创建、修改成功</li>
+<li>204：删除成功</li>
+<li>400：参数错误</li>
+<li>401：未登录</li>
+<li>403：禁止访问</li>
+<li>404：未找到</li>
+<li><p>500：系统错误</p>
+<p>但是有些时候仅仅使用 HTTP 状态码没有办法明确的表达错误信息，所以我倾向于在里面再包一层自定义的返回码，例如：</p>
+<p>成功时：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;code&quot;: 100,</span><br><span class="line">    &quot;msg&quot;: &quot;成功&quot;,</span><br><span class="line">    &quot;data&quot;: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 失败时：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;code&quot;: -1000,</span><br><span class="line">    &quot;msg&quot;: &quot;用户名或密码错误&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>data</code>是真正需要返回的数据，并且只会在请求成功时才存在，<code>msg</code>只用在开发环境，并且只为了开发人员识别。客户端逻辑只允许识别<code>code</code>，并且不允许直接将<code>msg</code>的内容展示给用户。如果这个错误很复杂，无法使用一段话描述清楚，也可以在添加一个<code>doc</code>字段，包含指向该错误的文档的链接。</p>
+<h3 id="返回数据"><a href="#返回数据" class="headerlink" title="返回数据"></a>返回数据</h3><p>JSON 比 XML 可视化更好，也更加节约流量，所以尽量不要使用 XML。</p>
+<p> 创建和修改操作成功后，需要返回该资源的全部信息。</p>
+<p> 返回数据不要和客户端界面强耦合，不要在设计 API 时就考虑少查询一张关联表或是少查询 / 返回几个字段能带来多大的性能提升。并且一定要以资源为单位，即使客户端一个页面需要展示多个资源，也不要在一个接口中全部返回，而是让客户端分别请求多个接口。</p>
+<p> 最好将返回数据进行加密和压缩，尤其是压缩在移动应用中还是比较重要的。</p>
+<h3 id="分页"><a href="#分页" class="headerlink" title="分页"></a>分页</h3><p> 在 <a href="http://www.scienjus.com/app-server-paging/">APP 后端分页设计</a> 中提到过，分页布局一般分为两种，一种是在 Web 端比较常见的有底部分页栏的电梯式分页，另一种是在 APP 中比较常见的上拉加载更多的流式分页。这两种分页的 API 到底该如何设计呢？</p>
+<p> 电梯式分页需要提供<code>page</code>（页数）和<code>pre_page</code>（每页的数量）。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/users/?page=2&amp;pre_page=20</span><br></pre></td></tr></table></figure>
+<p> 而服务端则需要额外返回<code>total_count</code>（总记录数），以及可选的当前页数、每页的数量（这两个与客户端提交的相同）、总页数、是否有下一页、是否有上一页（这三个都可以通过总记录数计算出）。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;pagination&quot;: &#123;</span><br><span class="line">       &quot;previous&quot;: 1,</span><br><span class="line">       &quot;next&quot;: 3,</span><br><span class="line">       &quot;current&quot;: 2,</span><br><span class="line">       &quot;per_page&quot;: 20,</span><br><span class="line">       &quot;total&quot;: 200,</span><br><span class="line">       &quot;pages&quot;: 10</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;data&quot;: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 流式布局也完全可以使用这种方式，并且不需要查询总记录数（好处是减少一次数据库操作，坏处时客户端需要多请求一次才能判断是否到最后一页）。但是会出现数据重复和缺失的情况，所以更推荐使用游标分页。</p>
+<p> 游标分页需要提供<code>cursor</code>(下一页的起点游标) 和<code>limit</code>(数量) 参数。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/articles/?cursor=2015-01-01 15:20:30&amp;limit=10</span><br></pre></td></tr></table></figure>
+<p> 如果文章列表默认是以创建时间为倒序排列的，那么<code>cursor</code>就是当前列表最后一条的创建时间（第一页为当前时间）。</p>
+<p> 服务端需要返回的数据也很简单，只需要以此游标为起点的总记录数和下一个起点游标就可以了。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;pagination&quot;: &#123;</span><br><span class="line">       &quot;next&quot;: &quot;2015-01-01 12:20:30&quot;,</span><br><span class="line">       &quot;limit&quot;: 10,</span><br><span class="line">       &quot;total&quot;: 100,</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;data&quot;: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 如果<code>total</code>小于<code>limit</code>，就说明已经没有数据了。</p>
+<p> 流式布局的分页 API 还有一种情况很常见，就是下拉刷新的增量更新。它的业务逻辑正好和游标分页相反，但是参数基本一样：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/articles/?cursor=2015-01-01 15:20:30&amp;limit=20</span><br></pre></td></tr></table></figure>
+<p> 返回数据有两种可能，一种是增量更新的数据小于指定的数量，就直接将全部数据返回（这个数量可以设置的相对大一些），客户端会将这些增量更新的数据添加在已有列表的顶部。但是如果增量更新的数据要大于指定的数量，就会只返回最新的 n 条数据作为第一页，这时候客户端需要清空之前的列表。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;pagination&quot;: &#123;</span><br><span class="line">       &quot;limit&quot;: 20,</span><br><span class="line">       &quot;total&quot;: 100,</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;data&quot;: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 如果<code>total</code>大于<code>limit</code>，说明增量的数据太多所以只返回了第一页，需要清空旧的列表。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/chrome-developer-tools/" rel="next" title="使用Chrome Developer Tools调试线上网站">
+                <i class="fa fa-chevron-left"></i> 使用Chrome Developer Tools调试线上网站
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/fastroute-spring/" rel="prev" title="使用FastRoute重写Spring的路由">
+                使用FastRoute重写Spring的路由 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#不要纠结于无意义的规范"><span class="nav-number">1.</span> <span class="nav-text">不要纠结于无意义的规范</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#为什么要用-RESTful"><span class="nav-number">2.</span> <span class="nav-text">为什么要用 RESTful</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#协议"><span class="nav-number">3.</span> <span class="nav-text">协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#版本"><span class="nav-number">4.</span> <span class="nav-text">版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#请求"><span class="nav-number">5.</span> <span class="nav-text">请求</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Token-和-Sign"><span class="nav-number">6.</span> <span class="nav-text">Token 和 Sign</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#统计性参数"><span class="nav-number">7.</span> <span class="nav-text">统计性参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#业务参数"><span class="nav-number">8.</span> <span class="nav-text">业务参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#响应"><span class="nav-number">9.</span> <span class="nav-text">响应</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#返回数据"><span class="nav-number">10.</span> <span class="nav-text">返回数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分页"><span class="nav-number">11.</span> <span class="nav-text">分页</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/my-restful-api-best-practices/';
+          this.page.identifier = 'my-restful-api-best-practices/';
+          this.page.title = '我所认为的RESTful API最佳实践';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

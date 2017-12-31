@@ -1,0 +1,845 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="P 站目前应该是目前最热门的二次元插画网站了，每天都有数以千计的投稿。但是其在作品量巨大的同时也出现了作品质量参差不齐的情况。而作为阅读者，作品的热度排序必须要付费加入高级用户才可以使用。所以想要免费并且省时省力的找到优秀作品便只能自己动手了，本文将会介绍如何通过爬取 P 站网页过滤出相对优质的作品。 免责声明 本文所介绍的方法仅用于学习和交流，作者并不鼓励大规模爬取原图，同时建议仅爬取筛选后的缩">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pixiv爬图教程">
+<meta property="og:url" content="http://www.scienjus.com/pixiv-parser/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="P 站目前应该是目前最热门的二次元插画网站了，每天都有数以千计的投稿。但是其在作品量巨大的同时也出现了作品质量参差不齐的情况。而作为阅读者，作品的热度排序必须要付费加入高级用户才可以使用。所以想要免费并且省时省力的找到优秀作品便只能自己动手了，本文将会介绍如何通过爬取 P 站网页过滤出相对优质的作品。 免责声明 本文所介绍的方法仅用于学习和交流，作者并不鼓励大规模爬取原图，同时建议仅爬取筛选后的缩">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/login.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/list.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/next.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/manga.png">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Pixiv爬图教程">
+<meta name="twitter:description" content="P 站目前应该是目前最热门的二次元插画网站了，每天都有数以千计的投稿。但是其在作品量巨大的同时也出现了作品质量参差不齐的情况。而作为阅读者，作品的热度排序必须要付费加入高级用户才可以使用。所以想要免费并且省时省力的找到优秀作品便只能自己动手了，本文将会介绍如何通过爬取 P 站网页过滤出相对优质的作品。 免责声明 本文所介绍的方法仅用于学习和交流，作者并不鼓励大规模爬取原图，同时建议仅爬取筛选后的缩">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2015/07/login.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/pixiv-parser/"/>
+
+
+
+
+
+  <title> Pixiv爬图教程 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/pixiv-parser/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Pixiv爬图教程
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-07-17T09:17:27+08:00">
+                2015-07-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/pixiv-parser/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="pixiv-parser/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>P 站目前应该是目前最热门的二次元插画网站了，每天都有数以千计的投稿。但是其在作品量巨大的同时也出现了作品质量参差不齐的情况。而作为阅读者，作品的热度排序必须要付费加入高级用户才可以使用。所以想要免费并且省时省力的找到优秀作品便只能自己动手了，本文将会介绍如何通过爬取 P 站网页过滤出相对优质的作品。</p>
+<h3 id="免责声明"><a href="#免责声明" class="headerlink" title="免责声明"></a>免责声明</h3><p> 本文所介绍的方法仅用于学习和交流，作者并不鼓励大规模爬取原图，同时建议仅爬取筛选后的<code>缩略图</code>并记录<code>作品 id</code>，之后可以通过作品 id 查看感兴趣的作品详情，这样做也不会对服务器造成太大压力。当然最好还是支持 P 站的 <a href="http://www.pixiv.net/premium.php" target="_blank" rel="noopener">高级用户功能</a>。</p>
+<h3 id="源码及环境介绍"><a href="#源码及环境介绍" class="headerlink" title="源码及环境介绍"></a>源码及环境介绍</h3><p> 本文所介绍的程序源码发布在 <a href="https://github.com/ScienJus/PixivParser" target="_blank" rel="noopener">Github</a> 上，开发环境为<code>IDEA14</code>+<code>JDK1.7</code>+<code>Maven</code>。<br> 项目引用的第三方库有<code>HttpClient</code>、<code>HtmlParser</code>和<code>json-smart</code>，前者用于向服务器发送 Http 请求，后两者用于解析页面数据。</p>
+<h3 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h3><p> 无论将要进行哪些操作，都是需要登录权限的，所以首先介绍如何在程序中登录 P 站：</p>
+<p> 首先打开<code>www.pxiv.com</code>，使用事先注册好的账号手动登陆，并使用抓包工具截取发出的 http 请求（这里用的<code>Chrome</code>的调试控制台），可以看到：</p>
+<p><img src="/uploads/2015/07/login.png" alt="login"></p>
+<p> 分析请求内容：</p>
+<ul>
+<li>请求被发送到了<code>https://www.secure.pixiv.net/login.php</code>。 </li>
+<li><code>mode</code>的值为<code>login</code>，<code>skip</code>的值为<code>1</code>，这两个应该是固定参数。</li>
+<li><code>pixiv_id</code>的值为用户名，<code>pass</code>的值为未加密的密码。</li>
+<li><p>登录成功后返回的 http 状态码是<code>302</code>，而不是<code>200</code>。</p>
+<p>通过<code>HttpClient</code>模拟登录请求（这里我使用的是<code>4.3.6</code>版本，各版本之间会有细小差别，不要盲目参照。）：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 登陆请求地址</span><br><span class="line"> */</span><br><span class="line">public static final String LOGIN_URL = &quot;https://www.secure.pixiv.net/login.php&quot;;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 登录成功的返回码</span><br><span class="line"> */</span><br><span class="line">public static final int LOGIN_SUCCESS_CODE = 302;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 登陆表单的构成</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">private UrlEncodedFormEntity buildLoginForm (String username, String password) &#123;</span><br><span class="line">    List params = new ArrayList ();</span><br><span class="line">    params.add (new BasicNameValuePair (&quot;mode&quot;, &quot;login&quot;));</span><br><span class="line">    params.add (new BasicNameValuePair (&quot;pixiv_id&quot;, username));</span><br><span class="line">    params.add (new BasicNameValuePair (&quot;pass&quot;, password));</span><br><span class="line">    params.add (new BasicNameValuePair (&quot;skip&quot;, &quot;1&quot;));</span><br><span class="line">    return new UrlEncodedFormEntity (params, Charset.forName (&quot;UTF-8&quot;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 登陆</span><br><span class="line"> * @return 登陆结果</span><br><span class="line"> */</span><br><span class="line">public boolean login (String username, String password) &#123;</span><br><span class="line">    if (username == null || password == null) &#123;</span><br><span class="line">        LOGGER.error (&quot;用户名或密码为空！&quot;);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    LOGGER.info (&quot;当前登录的用户为：&quot; + username);</span><br><span class="line">    //HttpClientContext 会存储请求的上下文对象（也就是 cookie），登陆后的请求都需要跟登录请求公用一个上下文。</span><br><span class="line">    HttpClientContext context = HttpClientContext.create ();</span><br><span class="line">    CloseableHttpClient client = HttpClients.createDefault ();</span><br><span class="line">    CloseableHttpResponse response = null;</span><br><span class="line">    try &#123;</span><br><span class="line">        HttpPost post = new HttpPost (LOGIN_URL);</span><br><span class="line">        RequestConfig requestConfig = RequestConfig.custom ().</span><br><span class="line">                build ();</span><br><span class="line">        post.setConfig (requestConfig);</span><br><span class="line">        UrlEncodedFormEntity entity = buildLoginForm (username, password);</span><br><span class="line">        post.setEntity (entity);</span><br><span class="line">        response = client.execute (post, context);</span><br><span class="line">        if (response.getStatusLine ().getStatusCode () == LOGIN_SUCCESS_CODE) &#123;</span><br><span class="line">            LOGGER.info (&quot;登陆成功！&quot;);</span><br><span class="line">            return true;</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            LOGGER.error (&quot;登陆失败！请检查用户名或密码是否正确&quot;);</span><br><span class="line">            return false;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        LOGGER.error (e.getMessage ());</span><br><span class="line">        return false;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (response != null) &#123;</span><br><span class="line">                response.close ();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            LOGGER.error (e.getMessage ());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 上面代码中创建了一个<code>HttpClientContext</code>对象，它的作用是保存请求的上下文信息，也就是将登录后的状态保存下来，这样在之后的请求中才能保证每个请求都被服务器认为是在登录后所做的操作。</p>
+<h3 id="关键词搜索及收藏数过滤"><a href="#关键词搜索及收藏数过滤" class="headerlink" title="关键词搜索及收藏数过滤"></a>关键词搜索及收藏数过滤</h3><p> 关键词搜索大概是 P 站中最常用的功能了，也是最能展示 P 站海量作品的功能。例如<code>初音ミク</code>这个标签就拥有高达<code>343588</code>件作品。按照 P 站默认每页返回 20 条作品，用户需要翻上万页才能全部看完，这是无法接受的。而在大部分情况下用户只想看一些质量比较高的作品，也就是<code>收藏数</code>高于某个标准的作品，所以第一个功能就是通过<code>标签</code>和<code>收藏标准线</code>将该标签下收藏数高于标准线的所有作品都筛选出来。</p>
+<p> 回到之前登录后的页面，在右上角搜索栏输入<code>艦隊これくしょん</code>，点击搜索并查看跳转后的地址，去掉一些不必要的参数并转码后链接为<code>http://www.pixiv.net/search.php?word=艦隊これくしょん</code>，点击下一页并选中 R-18，链接变为<code>http://www.pixiv.net/search.php?word=艦隊これくしょん&amp;p=2&amp;r18=1</code>，从这个链接中可以推测：</p>
+<ul>
+<li>请求被发送到了<code>http://www.pixiv.net/search.php</code>。 </li>
+<li><p><code>word</code>的值为搜索的内容，<code>p</code>的值为页数，<code>r18</code>表示是否只搜索 R18 作品</p>
+<p>模拟搜索请求，获得返回的页面：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 搜索请求地址</span><br><span class="line"> */</span><br><span class="line">public static final String SEARCH_URL = &quot;http://www.pixiv.net/search.php&quot;;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 拼接一个搜索的链接（固定为第一页）</span><br><span class="line"> * @param word 关键词</span><br><span class="line"> * @param isR18 是否 R18</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">private String bulidSearchUrl (String word, boolean isR18) &#123;</span><br><span class="line">    return SEARCH_URL + &quot;?word=&quot; + word + &quot;&amp;r18=&quot; + (isR18 ? &quot;1&quot; : &quot;0&quot;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 请求并获得页面</span><br><span class="line"> * @param url</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">private String getPage (String url, HttpClientContext context) &#123;</span><br><span class="line">    CloseableHttpResponse response = null;</span><br><span class="line">    HttpGet get = null;</span><br><span class="line">    CloseableHttpClient client = HttpClients.createDefault ();</span><br><span class="line">    try &#123;</span><br><span class="line">        get = new HttpGet (url);</span><br><span class="line">        RequestConfig requestConfig = RequestConfig.custom ()</span><br><span class="line">                .build ();</span><br><span class="line">        get.setConfig (requestConfig);</span><br><span class="line">        response = client.execute (get, context);</span><br><span class="line">        BufferedReader br = new BufferedReader (</span><br><span class="line">                new InputStreamReader (response.getEntity ().getContent (),</span><br><span class="line">                        PixivClientConfig.ENCODING));</span><br><span class="line">        StringBuilder pageHTML = new StringBuilder ();</span><br><span class="line">        String line;</span><br><span class="line">        while ((line = br.readLine ()) != null) &#123;</span><br><span class="line">            pageHTML.append (line);</span><br><span class="line">            pageHTML.append (&quot;\\r\</span><br><span class="line">&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return pageHTML.toString ();</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        LOGGER.error (&quot;获取网页失败：&quot; + url);</span><br><span class="line">        LOGGER.error (e.getMessage ());</span><br><span class="line">        return null;</span><br><span class="line">    &#125; finally &#123;</span><br><span class="line">        try &#123;</span><br><span class="line">            if (response != null) &#123;</span><br><span class="line">                response.close ();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (IOException e) &#123;</span><br><span class="line">            LOGGER.error (e.getMessage ());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 通过关键词搜索</span><br><span class="line"> * @param word 关键词</span><br><span class="line"> * @param isR18 是否只需要 r18</span><br><span class="line"> * @param context 有登录状态的请求上下文</span><br><span class="line"> */</span><br><span class="line">public String searchByKeyword (String word, boolean isR18, HttpClientContext context) &#123;</span><br><span class="line">    if (word == null || &quot;&quot;.equals (word.trim ())) &#123;</span><br><span class="line">        LOGGER.error (&quot;请输入关键词！&quot;);</span><br><span class="line">        return null;</span><br><span class="line">    &#125;</span><br><span class="line">    String searchUrl = bulidSearchUrl (word, isR18);</span><br><span class="line">    String pageHtml = getPage (searchUrl, context);</span><br><span class="line">    return pageHtml;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 得到返回页面之后，如何得到需要的数据呢？首先分析页面（这里也是用的<code>Chrome</code>的调试控制台）：</p>
+<p><img src="/uploads/2015/07/list.png" alt="list"></p>
+<p> 从上图可以看出，列表中每个作品的信息都在一个<code>class</code>为<code>image-item</code>的<code>li</code>中，这里可以通过两种方式将信息提取出来，一种是通过<code>HtmlParser</code>操作<code>Dom</code>提取内容，另一种是通过<code>正则表达式</code>直接截取字符串提取内容，本文主要使用前者：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 在搜索列表中过滤出制定条件的图片</span><br><span class="line"> * @param pageHtml 页面</span><br><span class="line"> * @param collectionNumber 收藏标准线</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">public List parseList (String pageHtml, int collectionNumber) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        List ids = new ArrayList ();</span><br><span class="line">        Parser parser = new Parser (pageHtml);</span><br><span class="line">        // 提取出所有 class 为 image-item 的 li</span><br><span class="line">        NodeFilter filter = new AndFilter (new TagNameFilter (&quot;li&quot;),new HasAttributeFilter (&quot;class&quot;,&quot;image-item&quot;));</span><br><span class="line">        NodeList list = parser.parse (filter);</span><br><span class="line">        for (int i = 0; i collectionNumber) &#123;</span><br><span class="line">                String id = uri.substring (uri.lastIndexOf (&quot;id=&quot;) + 3);</span><br><span class="line">                if (id.indexOf (&quot;&amp;&quot;) &gt; -1) &#123;</span><br><span class="line">                    id = id.substring (0, id.indexOf (&quot;&amp;&quot;));</span><br><span class="line">                &#125;</span><br><span class="line">                ids.add (id);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        return ids;</span><br><span class="line">    &#125; catch (ParserException e) &#123;</span><br><span class="line">        LOGGER.error (e.getMessage ());</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 因为之后要演示如何解析作品的详情页，以上代码只返回了作品的 id。如果按照开头推荐的做法，这里应该直接在列表中拿到作品的 id、缩略图地址和作者信息等数据。不过在下载缩略图的时候会出现 403 访问失败的情况，这个在之后也会提到如何处理。</p>
+<p> 解析完第一页的数据后如何跳转到第二页？也许你会说直接将参数中的<code>p</code>改为<code>2</code>即可，这确实是一个可行的方法，但是页数一直递增到何时才算到头呢？这里提供另一种思路：每个页面中都会有一个向右的箭头跳转到下一页，只需要找出这个箭头并访问它的 url 即可，如果没有找到则说明当前页就是最后一页：</p>
+<p><img src="/uploads/2015/07/next.png" alt="next"></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 在搜索列表中找到下一页的地址</span><br><span class="line"> * @param pageHtml</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">public String parseNextPage (String pageHtml) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        Parser parser = new Parser (pageHtml);</span><br><span class="line">        NodeFilter filter = new AndFilter (new TagNameFilter (&quot;a&quot;),new HasAttributeFilter (&quot;rel&quot;,&quot;next&quot;));</span><br><span class="line">        NodeList list = parser.parse (filter);</span><br><span class="line">        if (list.size () &gt; 0) &#123;</span><br><span class="line">            return ((LinkTag) list.elementAt (0)).getLink ();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (ParserException e) &#123;</span><br><span class="line">        LOGGER.error (e.getMessage ());</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="作品详情及下载原图"><a href="#作品详情及下载原图" class="headerlink" title="作品详情及下载原图"></a>作品详情及下载原图</h3><p> 之前提到返回作品 id 是为了解析作品详情，由于 P 站的作品会分为两种形式：单图的插画和多图的漫画，所以要以不同的方式解析，接下来介绍如何区分作品是单图还是多图，并且将图片都提取出来（再次声明：作者并不推荐这种直接批量下载原图的方式）。</p>
+<p> 在列表中点进作品的详情页，查看跳转后的 url（例如<code>http://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=51454369</code>）可以发现：</p>
+<ul>
+<li>请求作品详情页的地址为<code>http://www.pixiv.net/member_illust.php</code></li>
+<li><p><code>mode</code>的值固定为<code>medium</code>，<code>illust_id</code>的值为作品的 id</p>
+<p>同样按照之前的方法拿到 HTML 页面，多张图片的作品在页面上会出现<code>一次性投稿多张作品</code>的字眼，可以直接使用字符串查找。多张图片的作品点击封面图后会跳转到所有图片的页面，而跳转的链接仅是将<code>mode</code>的值从<code>medium</code>换成了<code>manga</code>。</p>
+</li>
+</ul>
+<p><img src="/uploads/2015/07/manga.png" alt="manga"></p>
+<p> 从详情页拿到图片地址的方法也很简单，单张图片的地址固定在一个<code>class</code>为<code>original-image</code>的<code>img</code>标签中，但是需要注意的是地址并不是在<code>src</code>属性中，而是在<code>data-src</code>中。多张图片需要找到所有<code>class</code>为<code>item-container</code>的<code>div</code>标签，再从它们的子节点中提取，在这里就不详述了，整体代码为：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 详情请求地址</span><br><span class="line"> */</span><br><span class="line">public static final String DETAIL_URL = &quot;http://www.pixiv.net/member_illust.php&quot;;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 拼接一个作品详情页的链接</span><br><span class="line"> * @param id 作品 id</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">private String buildDetailUrl (String id) &#123;</span><br><span class="line">    return DETAIL_URL + &quot;?mode=medium&amp;illust_id=&quot; + id;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 判断该页面是否有多张图片</span><br><span class="line"> * @param pageHtml</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">public boolean isManga (String pageHtml) &#123;</span><br><span class="line">    if (pageHtml.indexOf (&quot;一次性投稿多张作品&quot;) &gt; -1) &#123;</span><br><span class="line">        return true;</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 提取单张图片</span><br><span class="line"> * @param pageHtml</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">public String parseMedium (String pageHtml) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        Parser parser = new Parser (pageHtml);</span><br><span class="line">        NodeFilter filter = new AndFilter (new TagNameFilter (&quot;img&quot;),new HasAttributeFilter (&quot;class&quot;,&quot;original-image&quot;));</span><br><span class="line">        NodeList list = parser.parse (filter);</span><br><span class="line">        if (list.size () &gt; 0) &#123;</span><br><span class="line">            return ((ImageTag) list.elementAt (0)).getAttribute (&quot;data-src&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; catch (ParserException e) &#123;</span><br><span class="line">        LOGGER.error (e.getMessage ());</span><br><span class="line">    &#125;</span><br><span class="line">    return null;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * 提取多张图片</span><br><span class="line"> * @param pageHtml</span><br><span class="line"> * @return</span><br><span class="line"> */</span><br><span class="line">public List parseManga (String pageHtml) &#123;</span><br><span class="line">    try &#123;</span><br><span class="line">        List result = new ArrayList ();</span><br><span class="line">        Parser parser = new Parser (pageHtml);</span><br><span class="line">        NodeFilter filter = new AndFilter (new TagNameFilter (&quot;div&quot;),new HasAttributeFilter (&quot;class&quot;,&quot;item-container&quot;));</span><br><span class="line">        NodeList list = parser.parse (filter);</span><br><span class="line">        for (int i = 0; i getImages (String id, HttpClientContext context) &#123;</span><br><span class="line">    String url = buildDetailUrl (id);</span><br><span class="line">    String pageHtml = getPage (url, context);</span><br><span class="line">    if (pageHtml == null) &#123;</span><br><span class="line">        return new ArrayList ();</span><br><span class="line">    &#125;</span><br><span class="line">    if (isManga (pageHtml)) &#123;</span><br><span class="line">        url = url.replace (&quot;medium&quot;, &quot;manga&quot;);</span><br><span class="line">        pageHtml = getPage (url, context);</span><br><span class="line">        if (pageHtml == null) &#123;</span><br><span class="line">            return new ArrayList ();</span><br><span class="line">        &#125;</span><br><span class="line">        return parseManga (pageHtml);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        return Arrays.asList (parseMedium (pageHtml));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 下载图片本应该是最简单的一步，但是 P 站在这里留了个陷阱：服务器会在请求图片数据时判断请求的来源。如果来源不满足要求，则被认为是盗链返回 403 错误。所以在下载 P 站的图片时，需要将<code>header</code>中的<code>Referer</code>字段的值设为当前页的地址，才能顺利下载图片。</p>
+<h3 id="排行榜"><a href="#排行榜" class="headerlink" title="排行榜"></a>排行榜</h3><p> 上面的功能是为了获取特定标签下的优质作品，而排行榜则能获取整个 P 站最新、最受欢迎的作品，所以排行榜更受收图控们的欢迎，接下来介绍如何爬取排行榜页面，配合下载原图的方法即可完成懒人收图的愿望（当日排行榜的爬取速度很快，所以请尽量在人少的时间段进行）。</p>
+<p> 排行榜与之前的搜索列表有所不同的是：排行榜中的作品除了前 50 件，其他的都是通过 Ajax 异步加载的，服务器返回的格式是 JSON。所以比起之前所介绍的通过 HtmlParser 解析，更推荐通过解析 JSON 的方式，方便并且可以减少服务器的流量。</p>
+<p> 打开每日排行榜页面下拉到一定地步之后，页面会向服务器请求新的数据，可以通过抓包得到请求的地址格式为<code>http://www.pixiv.net/ranking.php?mode=daily&amp;p=2&amp;format=json</code>，同样分析请求内容：</p>
+<ul>
+<li>排行榜的请求地址为<code>http://www.pixiv.net/ranking.php</code></li>
+<li><code>mode</code>的值为<code>daily</code>，代表获取每日排行榜</li>
+<li><code>p</code>的值为页数</li>
+<li><p><code>format</code>的值为 json，需要服务器以 JSON 的格式返回数据</p>
+<p>而服务器返回的数据为：</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;contents&quot;: [</span><br><span class="line">        &#123;</span><br><span class="line">            &quot;illust_id&quot;: 51434201,</span><br><span class="line">            &quot;title&quot;: &quot;ラ！まとめ_10&quot;,</span><br><span class="line">            &quot;width&quot;: 700,</span><br><span class="line">            &quot;height&quot;: 993,</span><br><span class="line">            &quot;date&quot;: &quot;2015年07月15日 23:46&quot;,</span><br><span class="line">            &quot;tags&quot;: [</span><br><span class="line">                &quot;ラブライブ!&quot;,</span><br><span class="line">                &quot;ラブライブ!100users 入り&quot;,</span><br><span class="line">                &quot;西木野真姫&quot;</span><br><span class="line">            ],</span><br><span class="line">            &quot;url&quot;: &quot;http://i2.pixiv.net/c/240x480/img-master/img/2015/07/15/23/46/01/51434201_p0_master1200.jpg&quot;,</span><br><span class="line">            &quot;illust_type&quot;: &quot;0&quot;,</span><br><span class="line">            &quot;illust_book_style&quot;: &quot;0&quot;,</span><br><span class="line">            &quot;illust_page_count&quot;: &quot;12&quot;,</span><br><span class="line">            &quot;illust_upload_timestamp&quot;: 1436971561,</span><br><span class="line">            &quot;user_id&quot;: 234474,</span><br><span class="line">            &quot;user_name&quot;: &quot;ヒラメ&quot;,</span><br><span class="line">            &quot;profile_img&quot;: &quot;http://i1.pixiv.net/img15/profile/o2on/2883581_s.jpg&quot;,</span><br><span class="line">            &quot;rank&quot;: 100,</span><br><span class="line">            &quot;yes_rank&quot;: 0,</span><br><span class="line">            &quot;total_score&quot;: 1220,</span><br><span class="line">            &quot;view_count&quot;: 4005,</span><br><span class="line">            &quot;illust_content_type&quot;: &#123;</span><br><span class="line">                &quot;sexual&quot;: 0,</span><br><span class="line">                &quot;lo&quot;: false,</span><br><span class="line">                &quot;grotesque&quot;: false,</span><br><span class="line">                &quot;violent&quot;: false,</span><br><span class="line">                &quot;homosexual&quot;: false,</span><br><span class="line">                &quot;drug&quot;: false,</span><br><span class="line">                &quot;thoughts&quot;: false,</span><br><span class="line">                &quot;antisocial&quot;: false,</span><br><span class="line">                &quot;religion&quot;: false,</span><br><span class="line">                &quot;original&quot;: false,</span><br><span class="line">                &quot;furry&quot;: false,</span><br><span class="line">                &quot;bl&quot;: false,</span><br><span class="line">                &quot;yuri&quot;: false</span><br><span class="line">            &#125;,</span><br><span class="line">            &quot;attr&quot;: &quot;&quot;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    &quot;mode&quot;: &quot;daily&quot;,</span><br><span class="line">    &quot;content&quot;: &quot;all&quot;,</span><br><span class="line">    &quot;page&quot;: &quot;2&quot;,</span><br><span class="line">    &quot;prev&quot;: 1,</span><br><span class="line">    &quot;next&quot;: 3,</span><br><span class="line">    &quot;date&quot;: &quot;20150716&quot;,</span><br><span class="line">    &quot;prev_date&quot;: &quot;20150715&quot;,</span><br><span class="line">    &quot;next_date&quot;: null,</span><br><span class="line">    &quot;rank_total&quot;: 500</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p> 这里有几个比较重要的参数：</p>
+<ul>
+<li><code>mode</code>为排行榜的类型</li>
+<li><code>page</code>是当前页，<code>prev</code>和<code>next</code>分别是上一页和下一页</li>
+<li><code>date</code>是当前日期，<code>prev_date</code>和<code>next_date</code>分别是前一天和后一天</li>
+<li><code>rank_total</code>指排行榜的总数</li>
+<li><code>content</code>包含具体每个作品的信息</li>
+</ul>
+<p>JSON 的解析比较简单，所以就不贴代码了。</p>
+<p> 如此一来这篇教程也到了尾声了，具体程序可以在 <a href="https://github.com/ScienJus/PixivParser" target="_blank" rel="noopener">我的 Github</a> 中找到。最后再次强调：本教程及程序仅用于学习和交流，请勿用于恶意攻击等用途。热爱 P 站且有一定经济实力请支持 <a href="http://www.pixiv.net/premium.php" target="_blank" rel="noopener">高级用户功能</a>，看到喜爱的作品请支持作者。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/build-wordpress-by-aliyun/" rel="next" title="阿里云搭建 WordPress 全过程">
+                <i class="fa fa-chevron-left"></i> 阿里云搭建 WordPress 全过程
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/censor-words/" rel="prev" title="简易敏感词过滤算法">
+                简易敏感词过滤算法 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#免责声明"><span class="nav-number">1.</span> <span class="nav-text">免责声明</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#源码及环境介绍"><span class="nav-number">2.</span> <span class="nav-text">源码及环境介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#登录"><span class="nav-number">3.</span> <span class="nav-text">登录</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#关键词搜索及收藏数过滤"><span class="nav-number">4.</span> <span class="nav-text">关键词搜索及收藏数过滤</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#作品详情及下载原图"><span class="nav-number">5.</span> <span class="nav-text">作品详情及下载原图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#排行榜"><span class="nav-number">6.</span> <span class="nav-text">排行榜</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/pixiv-parser/';
+          this.page.identifier = 'pixiv-parser/';
+          this.page.title = 'Pixiv爬图教程';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

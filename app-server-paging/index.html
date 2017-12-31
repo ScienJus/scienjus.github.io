@@ -1,0 +1,826 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="移动端套用传统分页的缺点 目前数据分页一般分为两种类型：传统网站比较常见的电梯式分页布局及移动端比较常见的流式分页布局。  电梯式分页布局在传统网站中非常常见，比如百度、淘宝：    它的特点是在网站的底部有分页栏，用户不仅可以点击上一页、下一页浏览数据，还可以直接点击页码跳转到特定页，所以电梯式分页的的 SQL 查询（以下称为传统分页）也比较统一，基本上为前端提供页数及每页的数量，后端套用下面的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="APP后端分页设计">
+<meta property="og:url" content="http://www.scienjus.com/app-server-paging/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="移动端套用传统分页的缺点 目前数据分页一般分为两种类型：传统网站比较常见的电梯式分页布局及移动端比较常见的流式分页布局。  电梯式分页布局在传统网站中非常常见，比如百度、淘宝：    它的特点是在网站的底部有分页栏，用户不仅可以点击上一页、下一页浏览数据，还可以直接点击页码跳转到特定页，所以电梯式分页的的 SQL 查询（以下称为传统分页）也比较统一，基本上为前端提供页数及每页的数量，后端套用下面的">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/baidu.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/taobao.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/weibo.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/repeat.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/smzdm.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/lose.png">
+<meta property="og:image" content="http://www.scienjus.com/uploads/2015/07/news.png">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="APP后端分页设计">
+<meta name="twitter:description" content="移动端套用传统分页的缺点 目前数据分页一般分为两种类型：传统网站比较常见的电梯式分页布局及移动端比较常见的流式分页布局。  电梯式分页布局在传统网站中非常常见，比如百度、淘宝：    它的特点是在网站的底部有分页栏，用户不仅可以点击上一页、下一页浏览数据，还可以直接点击页码跳转到特定页，所以电梯式分页的的 SQL 查询（以下称为传统分页）也比较统一，基本上为前端提供页数及每页的数量，后端套用下面的">
+<meta name="twitter:image" content="http://www.scienjus.com/uploads/2015/07/baidu.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/app-server-paging/"/>
+
+
+
+
+
+  <title> APP后端分页设计 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/app-server-paging/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                APP后端分页设计
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-07-29T10:21:52+08:00">
+                2015-07-29
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/app-server-paging/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="app-server-paging/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="移动端套用传统分页的缺点"><a href="#移动端套用传统分页的缺点" class="headerlink" title="移动端套用传统分页的缺点"></a>移动端套用传统分页的缺点</h3><p> 目前数据分页一般分为两种类型：传统网站比较常见的电梯式分页布局及移动端比较常见的流式分页布局。</p>
+<p> 电梯式分页布局在传统网站中非常常见，比如百度、淘宝：</p>
+<p><img src="/uploads/2015/07/baidu.png" alt="baidu"></p>
+<p><img src="/uploads/2015/07/taobao.png" alt="taobao"></p>
+<p> 它的特点是在网站的底部有分页栏，用户不仅可以点击上一页、下一页浏览数据，还可以直接点击页码跳转到特定页，所以电梯式分页的的 SQL 查询（以下称为传统分页）也比较统一，基本上为前端提供页数及每页的数量，后端套用下面的 SQL 查询语句：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#currentPage 为当前页数（以 1 开始），pagingSize 为每页的数据量</span><br><span class="line">select * from ... where ... order by ... limit (currentPage- 1) * pagingSize, pagingSize;</span><br></pre></td></tr></table></figure>
+<p> 流式分页布局在移动端比较流行，因为移动端的屏幕尺寸普遍较小，会导致分页栏不容易点击。并且移动端拥有良好的滑动体验，向上滑动加载更多，向下滑动刷新的操作方式更加便利。</p>
+<p><img src="/uploads/2015/07/weibo.png" alt="weibo"></p>
+<p> 在后端的处理上，传统分页逻辑是完全可以套用到流式分页布局上的。并且因为不用提供总页数或总数据量还能减少查询次数，但是也会暴露出如下问题：</p>
+<h4 id="数据重复"><a href="#数据重复" class="headerlink" title="数据重复"></a>数据重复</h4><p><img src="/uploads/2015/07/repeat.png" alt="repeat"></p>
+<p> 比如：</p>
+<p><img src="/uploads/2015/07/smzdm.png" alt="smzdm"></p>
+<h4 id="数据缺失"><a href="#数据缺失" class="headerlink" title="数据缺失"></a>数据缺失</h4><p><img src="/uploads/2015/07/lose.png" alt="lose"></p>
+<h4 id="效率低"><a href="#效率低" class="headerlink" title="效率低"></a>效率低</h4><p> 使用 limit 在数据量小的时候并不会有效率问题，但是当数据偏移量很大时性能会开始急剧下降，查询性能比对会在接下来提到。</p>
+<p> 综上所述，流式分页不需要也不适合使用传统分页，而是使用一种更合适的方法：游标分页。</p>
+<h3 id="游标分页举例"><a href="#游标分页举例" class="headerlink" title="游标分页举例"></a>游标分页举例</h3><p> 假设有一个<code>news_</code>表用来存放新闻信息，这个表的结构如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 新闻表，这个表可能还有一些别的字段，不过与主题无关就暂时省略掉了</span><br><span class="line">create table news_ (</span><br><span class="line">    id_ int auto_increment comment &apos;id&apos;,</span><br><span class="line">    title_ varchar (200) comment &apos;标题&apos;,    </span><br><span class="line">    content_ text comment &apos;正文&apos;,</span><br><span class="line">    create_date datetime comment &apos;创建日期&apos;,</span><br><span class="line">    ...        </span><br><span class="line">    primary key (id_)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p> 众所周知，大部分的软件都会把最新的新闻放在最前面，这里我们假设刨除其他因素，单纯以<code>create_date</code>倒序排列，使用传统分页的 SQL 语句如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#currentPage 为当前页码（以 1 开始），pagingSize 为每页的数据量</span><br><span class="line">select * from news_ order by create_date desc limit ($currentPage- 1) * $pagingSize, $pagingSize;</span><br></pre></td></tr></table></figure>
+<p> 而游标分页则不需要提供当前页码，而是提供当前页的起始位置（也称为游标）用于定位，游标分页的 SQL 语句如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#cursor 为上一页最后一条新闻的 create_date（如果是第一页则为当前时间），pagingSize 为每页的数据量</span><br><span class="line">select * from news_ where create_date</span><br></pre></td></tr></table></figure>
+<p> 从这里可以看出，传统分页的偏移量是固定的，所以会因为数据的新增或减少导致接下来加载数据重复或丢失。而游标分页则不会出现这种情况，因为当数据发生新增和减少时，游标的位置也会相对变化。</p>
+<h3 id="效率对比"><a href="#效率对比" class="headerlink" title="效率对比"></a>效率对比</h3><p> 之前提到传统分页在偏移量大时性能会急剧下降，而游标分页则不会，在这里同样以<code>news_</code>表做个实验。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"># 创建新闻表</span><br><span class="line">drop table if exists news_;</span><br><span class="line">create table news_ (</span><br><span class="line">    id_ int auto_increment comment &apos;id&apos;,</span><br><span class="line">    title_ varchar (200) comment &apos;标题&apos;,</span><br><span class="line">    content_ text comment &apos;正文&apos;,</span><br><span class="line">    create_date datetime comment &apos;创建日期&apos;,</span><br><span class="line">    primary key (id_)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"># 自动添加数据的存储过程</span><br><span class="line">create procedure insert_to_news ()</span><br><span class="line">begin</span><br><span class="line">    declare i int;</span><br><span class="line">    set i = 0;</span><br><span class="line">    while i</span><br></pre></td></tr></table></figure>
+<p> 使用上面的 SQL 语句创建一个拥有 100w 条数据的<code>news_</code>表，分别使用传统分页和游标分页测试一下查询效率：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"># 查询时间:0.928s</span><br><span class="line">select * from news_ order by create_date desc limit 900000, 20;</span><br><span class="line"></span><br><span class="line"># 这里的 1911-05-01 20:06:57 是我生成数据中与上边查询对应的游标，请自行替换。</span><br><span class="line"># 查询时间:0.146s</span><br><span class="line">select * from news_ where create_date</span><br></pre></td></tr></table></figure>
+<p> 可以看出在偏移量较大的情况下，即使没有添加索引游标分页的查询时间都超越传统分页几倍，而在添加了索引之后几乎不会因为偏移量造成任何影响。</p>
+<h3 id="游标的另一种用法，更新新增数据"><a href="#游标的另一种用法，更新新增数据" class="headerlink" title="游标的另一种用法，更新新增数据"></a>游标的另一种用法，更新新增数据</h3><p> 向新浪微博等软件，当在主页面放置一段时间后，就会收到提醒<code>有 1 条新微博，点击查看</code>，如果用户点击，则会将新增的数据添加到顶端。很明显，这样的操作也不是传统分页能够实现的，所以大部分使用传统分页逻辑的程序在面对此需求时会直接清除所有内容，重新加载第一页。</p>
+<p><img src="/uploads/2015/07/news.png" alt="news"></p>
+<p> 很显然这并不是一个很好的方法，因为很有可能新增的数据只有 1、2 条，而为了这点数据刷新整页是非常浪费的。此时如果使用游标则会轻松很多，同样以<code>news_</code>表举例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># 获得进入页面后新增的新闻数，cursor 为当前页面的第一条新闻的创建时间</span><br><span class="line">select count (id_) from news_ where create_date &gt; $cursor;</span><br><span class="line"></span><br><span class="line"># 如果新增的新闻数较小，点击则只加载新增的新闻，cursor 为当前页面的第一条新闻的创建时间</span><br><span class="line">select * from news_ where create_date &gt; $cursor order by create_date desc;</span><br></pre></td></tr></table></figure>
+<p> 这样便可以在新增量比较小的时候直接加载新增数据放在页面顶部，在新增量较大时才选择重新加载第一页数据。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p> 传统分页的特点</p>
+<ul>
+<li>可以直接根据页码跳转到特定页</li>
+<li>可能会出现重复、丢失数据的情况</li>
+<li>页数较大时性能会降低</li>
+<li><p>排序条件与分页无关</p>
+<p>游标分页的特点</p>
+</li>
+<li><p>不可以直接跳转到特定页，只能加载下一页</p>
+</li>
+<li>不会出现重复、丢失数据的情况</li>
+<li>查询效率与页数无关，并且优于传统分页</li>
+<li>不适合排序条件比较复杂的分页</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/censor-words/" rel="next" title="简易敏感词过滤算法">
+                <i class="fa fa-chevron-left"></i> 简易敏感词过滤算法
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/restful-token-authorization/" rel="prev" title="RESTful登录设计（基于Spring及Redis的Token鉴权）">
+                RESTful登录设计（基于Spring及Redis的Token鉴权） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#移动端套用传统分页的缺点"><span class="nav-number">1.</span> <span class="nav-text">移动端套用传统分页的缺点</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#数据重复"><span class="nav-number">1.1.</span> <span class="nav-text">数据重复</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#数据缺失"><span class="nav-number">1.2.</span> <span class="nav-text">数据缺失</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#效率低"><span class="nav-number">1.3.</span> <span class="nav-text">效率低</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#游标分页举例"><span class="nav-number">2.</span> <span class="nav-text">游标分页举例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#效率对比"><span class="nav-number">3.</span> <span class="nav-text">效率对比</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#游标的另一种用法，更新新增数据"><span class="nav-number">4.</span> <span class="nav-text">游标的另一种用法，更新新增数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#总结"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/app-server-paging/';
+          this.page.identifier = 'app-server-paging/';
+          this.page.title = 'APP后端分页设计';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

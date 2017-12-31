@@ -1,0 +1,822 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="ScienJus's Blog" type="application/atom+xml" />
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="自从第一次在项目中使用 Redis 后便深深地喜欢上了这个方便快速的 NoSQL 数据库，所以在很多需求中都会下意识的去寻找基于 Redis 的解决方案，在尝试后将这些使用场景记录下来希望能给大家带来帮助。 缓存 作为Key-Value形态的内存数据库，Redis 最先会被想到的应用场景便是作为数据缓存。而使用 Redis 缓存数据非常简单，只需要通过string类型将序列化后的对象存起来即可，不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis应用场景">
+<meta property="og:url" content="http://www.scienjus.com/redis-use-case/index.html">
+<meta property="og:site_name" content="ScienJus&#39;s Blog">
+<meta property="og:description" content="自从第一次在项目中使用 Redis 后便深深地喜欢上了这个方便快速的 NoSQL 数据库，所以在很多需求中都会下意识的去寻找基于 Redis 的解决方案，在尝试后将这些使用场景记录下来希望能给大家带来帮助。 缓存 作为Key-Value形态的内存数据库，Redis 最先会被想到的应用场景便是作为数据缓存。而使用 Redis 缓存数据非常简单，只需要通过string类型将序列化后的对象存起来即可，不">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2017-12-31T15:36:08.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis应用场景">
+<meta name="twitter:description" content="自从第一次在项目中使用 Redis 后便深深地喜欢上了这个方便快速的 NoSQL 数据库，所以在很多需求中都会下意识的去寻找基于 Redis 的解决方案，在尝试后将这些使用场景记录下来希望能给大家带来帮助。 缓存 作为Key-Value形态的内存数据库，Redis 最先会被想到的应用场景便是作为数据缓存。而使用 Redis 缓存数据非常简单，只需要通过string类型将序列化后的对象存起来即可，不">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.scienjus.com/redis-use-case/"/>
+
+
+
+
+
+  <title> Redis应用场景 | ScienJus's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">ScienJus's Blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">Science & Justice</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://www.scienjus.com/redis-use-case/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ScienJus">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="ScienJus's Blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Redis应用场景
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2015-08-16T08:05:39+08:00">
+                2015-08-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/redis-use-case/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count"
+                        data-disqus-identifier="redis-use-case/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>自从第一次在项目中使用 Redis 后便深深地喜欢上了这个方便快速的 NoSQL 数据库，所以在很多需求中都会下意识的去寻找基于 Redis 的解决方案，在尝试后将这些使用场景记录下来希望能给大家带来帮助。</p>
+<h3 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h3><p> 作为<code>Key-Value</code>形态的内存数据库，Redis 最先会被想到的应用场景便是作为数据缓存。而使用 Redis 缓存数据非常简单，只需要通过<code>string</code>类型将序列化后的对象存起来即可，不过也有一些需要注意的地方：</p>
+<ul>
+<li>必须保证不同对象的 key 不会重复，并且使 key 尽量短，一般使用类名（表名）加主键拼接而成。</li>
+<li>选择一个优秀的序列化方式也很重要，目的是提高序列化的效率和减少内存占用。</li>
+<li>缓存内容与数据库的一致性，这里一般有两种做法：<ol>
+<li>只在数据库查询后将对象放入缓存，如果对象发生了修改或删除操作，直接清除对应缓存（或设为过期）。</li>
+<li>在数据库新增和查询后将对象放入缓存，修改后更新缓存，删除后清除对应缓存（或设为过期）。</li>
+</ol>
+</li>
+</ul>
+<h3 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h3><p>Redis 中<code>list</code>的数据结构实现是双向链表，所以可以非常便捷的应用于消息队列（生产者 / 消费者模型）。消息的生产者只需要通过<code>lpush</code>将消息放入 list，消费者便可以通过<code>rpop</code>取出该消息，并且可以保证消息的有序性。如果需要实现带有优先级的消息队列也可以选择<code>sorted set</code>。而<code>pub/sub</code>功能也可以用作发布者 / 订阅者模型的消息。无论使用何种方式，由于 Redis 拥有持久化功能，也不需要担心由于服务器故障导致消息丢失的情况。</p>
+<h3 id="时间轴（Timeline）"><a href="#时间轴（Timeline）" class="headerlink" title="时间轴（Timeline）"></a>时间轴（Timeline）</h3><p><code>list</code>作为双向链表，不光可以作为队列使用。如果将它用作栈便可以成为一个公用的时间轴。当用户发完微博后，都通过<code>lpush</code>将它存放在一个 key 为<code>LATEST_WEIBO</code>的<code>list</code>中，之后便可以通过<code>lrange</code>取出当前最新的微博。</p>
+<h3 id="排行榜"><a href="#排行榜" class="headerlink" title="排行榜"></a>排行榜</h3><p> 使用<code>sorted set</code>和一个计算热度的算法便可以轻松打造一个热度排行榜，<code>zrevrangebyscore</code>可以得到以分数倒序排列的序列，<code>zrank</code>可以得到一个成员在该排行榜的位置（是分数正序排列时的位置，如果要获取倒序排列时的位置需要用<code>zcard</code>-<code>zrank</code>）。</p>
+<h3 id="计数器"><a href="#计数器" class="headerlink" title="计数器"></a>计数器</h3><p> 计数功能应该是最适合 Redis 的使用场景之一了，因为它高频率读写的特征可以完全发挥 Redis 作为内存数据库的高效。在 Redis 的数据结构中，<code>string</code>、<code>hash</code>和<code>sorted set</code>都提供了<code>incr</code>方法用于原子性的自增操作，下面举例说明一下它们各自的使用场景：</p>
+<ul>
+<li>如果应用需要显示每天的注册用户数，便可以使用<code>string</code>作为计数器，设定一个名为<code>REGISTERED_COUNT_TODAY</code>的 key，并在初始化时给它设置一个到凌晨 0 点的过期时间，每当用户注册成功后便使用<code>incr</code>命令使该 key 增长 1，同时当每天凌晨 0 点后，这个计数器都会因为 key 过期使值清零。</li>
+<li>每条微博都有点赞数、评论数、转发数和浏览数四条属性，这时用<code>hash</code>进行计数会更好，将该计数器的 key 设为<code>weibo:weibo_id</code>，<code>hash</code>的 field 为<code>like_number</code>、<code>comment_number</code>、<code>forward_number</code>和<code>view_number</code>，在对应操作后通过<code>hincrby</code>使<code>hash 中</code>的 field 自增。</li>
+<li>如果应用有一个发帖排行榜的功能，便选择<code>sorted set</code>吧，将集合的 key 设为<code>POST_RANK</code>。当用户发帖后，使用<code>zincrby</code>将该用户 id 的 score 增长 1。<code>sorted set</code>会重新进行排序，用户所在排行榜的位置也就会得到实时的更新。</li>
+</ul>
+<h3 id="好友关系"><a href="#好友关系" class="headerlink" title="好友关系"></a>好友关系</h3><p> 这个场景最开始是是一篇介绍微博 Redis 应用的 PPT 中看到的，其中提到微博的 Redis 主要是用在在计数和好友关系两方面上，当时对好友关系方面的用法不太了解，后来看到《Redis 设计与实现》中介绍到作者最开始去使用 Redis 便是希望能通过<code>set</code>解决传统数据库无法快速计算集合中交集这个功能。后来联想到微博当前的业务场景，确实能够以这种方式实现，所以姑且猜测一下：</p>
+<p> 对于一个用户 A，将它的关注和粉丝的用户 id 都存放在两个 set 中：</p>
+<ul>
+<li><code>A:follow</code>：存放 A 所有关注的用户 id</li>
+<li><p><code>A:follower</code>：存放 A 所有粉丝的用户 id</p>
+<p>那么通过<code>sinter</code>命令便可以根据<code>A:follow</code>和<code>A:follower</code>的交集得到与 A 互相关注的用户。当 A 进入另一个用户 B 的主页后，<code>A:follow</code>和<code>B:follow</code>的交集便是 A 和 B 的共同专注，<code>A:follow</code>和<code>B:follower</code>的交集便是 A 关注的人也关注了 B。</p>
+</li>
+</ul>
+<h3 id="分布式锁"><a href="#分布式锁" class="headerlink" title="分布式锁"></a>分布式锁</h3><p> 在 Redis 2.6.12 版本开始，<code>string</code>的<code>set</code>命令增加了三个参数：</p>
+<ul>
+<li><code>EX</code>：设置键的过期时间（单位为秒）</li>
+<li><code>PX</code>：设置键的过期时间（单位为毫秒）</li>
+<li><p><code>NX</code> | <code>XX</code>：当设置为<code>NX</code>时，仅当 key 存在时才进行操作，设置为<code>XX</code>时，仅当 key 不存在才会进行操作</p>
+<p>由于这个操作是原子性的，可以简单地以此实现一个分布式的锁，例如：</p>
+</li>
+</ul>
+<p><code>set key &quot;lock&quot; EX 1 XX</code></p>
+<p> 如果这个操作返回<code>false</code>，说明 key 的添加不成功，也就是当前有人在占用这把锁。而如果返回<code>true</code>，则说明得了锁，便可以继续进行操作，并且在操作后通过<code>del</code>命令释放掉锁。并且即使程序因为某些原因并没有释放锁，由于设置了过期时间，该锁也会在 1 秒后自动释放，不会影响到其他程序的运行。</p>
+<h3 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h3><p> 倒排索引是构造搜索功能的最常见方式，在 Redis 中也可以通过<code>set</code>进行建立倒排索引，这里以简单的拼音 + 前缀搜索城市功能举例：</p>
+<p> 假设一个城市<code>北京</code>，通过拼音词库将<code>北京</code>转为<code>beijing</code>，再通过前缀分词将这两个词分为若干个前缀索引，有：<code>北</code>、<code>北京</code>、<code>b</code>、<code>be</code>…<code>beijin</code>和<code>beijing</code>。将这些索引分别作为<code>set</code>的 key（例如:<code>index:北</code>）并存储<code>北京</code>的 id，倒排索引便建立好了。接下来只需要在搜索时通过关键词取出对应的<code>set</code>并得到其中的 id 即可。</p>
+<h3 id="一些建议"><a href="#一些建议" class="headerlink" title="一些建议"></a>一些建议</h3><ul>
+<li><p>Redis 速度快是建立在内存数据库基础上的，但是一台服务器的内存要比磁盘金贵许多，所以在项目初期不要想什么都往 Redis 里放，这样当数据量上来后很快内存就会不够用，反而得不偿失。合理的利用有限的内存，将读（写）频繁的热数据放在 Redis 中才能更好感受到它带来的性能提升。</p>
+</li>
+<li></li>
+</ul>
+<p>Redis 虽然提供了<code>RDB</code>和<code>AOF</code>两种持久化方式，但是普遍还是认为 Redis 的持久化并不是很靠谱。这也是我一直不敢尝试彻底的用 Redis 去实现第五点（好友关系）的原因。</p>
+<ul>
+<li><p>虽然 Redis 在 3.0 之后才推出官方的集群方案，但是也有很多不错的开源方案，比如<code>Codis</code>。</p>
+</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/restful-token-authorization/" rel="next" title="RESTful登录设计（基于Spring及Redis的Token鉴权）">
+                <i class="fa fa-chevron-left"></i> RESTful登录设计（基于Spring及Redis的Token鉴权）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/install-mongodb-on-centos/" rel="prev" title="在CentOS下安装MongoDB">
+                在CentOS下安装MongoDB <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://c.disquscdn.com/uploads/users/16892/7730/avatar92.jpg"
+               alt="ScienJus" />
+          <p class="site-author-name" itemprop="name">ScienJus</p>
+           
+              <p class="site-description motion-element" itemprop="description">程序员，伪任豚，看剧，追番，不玩游戏。这里是我的博客。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">46</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+          <div class="feed-link motion-element">
+            <a href="/atom.xml" rel="alternate">
+              <i class="fa fa-rss"></i>
+              RSS
+            </a>
+          </div>
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/ScienJus" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="http://weibo.com/ScienJus" target="_blank" title="Weibo">
+                  
+                    <i class="fa fa-fw fa-weibo"></i>
+                  
+                  Weibo
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://www.zhihu.com/people/XieEnlong/activities" target="_blank" title="Zhihu">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Zhihu
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#缓存"><span class="nav-number">1.</span> <span class="nav-text">缓存</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#消息队列"><span class="nav-number">2.</span> <span class="nav-text">消息队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时间轴（Timeline）"><span class="nav-number">3.</span> <span class="nav-text">时间轴（Timeline）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#排行榜"><span class="nav-number">4.</span> <span class="nav-text">排行榜</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#计数器"><span class="nav-number">5.</span> <span class="nav-text">计数器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#好友关系"><span class="nav-number">6.</span> <span class="nav-text">好友关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#分布式锁"><span class="nav-number">7.</span> <span class="nav-text">分布式锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#倒排索引"><span class="nav-number">8.</span> <span class="nav-text">倒排索引</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一些建议"><span class="nav-number">9.</span> <span class="nav-text">一些建议</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ScienJus</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv">
+      <i class="fa fa-user"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_uv"></span>
+      
+    </span>
+  
+
+  
+    <span class="site-pv">
+      <i class="fa fa-eye"></i>
+      <span class="busuanzi-value" id="busuanzi_value_site_pv"></span>
+      
+    </span>
+  
+</div>
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+    
+      <script id="dsq-count-scr" src="https://scienjus.disqus.com/count.js" async></script>
+    
+
+    
+      <script type="text/javascript">
+        var disqus_config = function () {
+          this.page.url = 'http://www.scienjus.com/redis-use-case/';
+          this.page.identifier = 'redis-use-case/';
+          this.page.title = 'Redis应用场景';
+        };
+        var d = document, s = d.createElement('script');
+        s.src = 'https://scienjus.disqus.com/embed.js';
+        s.setAttribute('data-timestamp', '' + +new Date());
+        (d.head || d.body).appendChild(s);
+      </script>
+    
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
