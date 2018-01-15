@@ -1,0 +1,22 @@
+menu:
+    Blog: /
+    Archive: /archives/
+    Weibo: http://weibo.com/ScienJus
+    GitHub: https://github.com/ScienJus
+    Rss: /atom.xml
+    About: /about/
+
+favicon: /favicon.png
+logo: /favicon.png
+
+# Comment
+# e.g disqus: seansun
+disqus: scienjus
+# duoshuo:
+
+# Analytics
+# google-analytics:
+ga: UA-65933410-1
+
+# Copyright Infomation
+startyear: 2015
