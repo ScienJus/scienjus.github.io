@@ -8,7 +8,7 @@ permalink: spring-cloud-autoconfiguration
 
 <!--more-->
 
-# 什么是 AutoConfiguration
+## 什么是 AutoConfiguration
 
 Spring Boot 作为加快 Spring 项目开发的扩展框架，其中一个很重要的特性就是引入了 Starter 套件。Starter 可以在程序启动时自动初始化程序所需要的 Bean，开发者只需要关注如何使用组件本身。
 
@@ -21,7 +21,7 @@ Spring Boot 通过 AutoConfiguration 机制使得应用可以在启动时根据�
 3. 条件化加载：通过判断当前应用中引入的类库或是配置项，动态的判断项目是否需要加载某一个配置类，或是初始化某个 Bean。
 4. 配置项映射：定义每个组件可以通过哪些配置项进行配置，遵从约定大于配置的原则，开发者只需要按照定义对应的值。
 
-# 配置类
+## 配置类
 
 从 Spring 3 开始，开发者就可以通过 Java Config 的方式配置 Bean 了。
 
@@ -41,7 +41,7 @@ public class GsonConfiguration {
 
 Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，在这个项目中可以看到 Spring 为每个组件定义了哪些类、初始化了哪些 Bean，以及是如何进行配置的。
 
-# 自动装载
+## 自动装载
 
 对于传统的配置类，在 Spring 项目中一般都是由组件扫描（`@ComponentScan`）或是主动引入（`@Import`）的方式去进行装载。这种方式使得使用者被迫的去了解组件的配制方法和源码，极易出现配置错误等问题。
 
@@ -49,7 +49,7 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 其实现原理也是基于 Spring 现有的组件。
 
-## 原理
+### 原理
 
 ![](/uploads/15032215137843.jpg)
 
@@ -80,11 +80,11 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 > 这个文件不光可以定义配置类，还可以定义 `ApplicationListener` 或是 `ApplicationContextInitializer`，一样用来实现组件自动装载的功能。
 
-## 阻止 AutoConfiguration
+### 阻止 AutoConfiguration
 
 阻止 AutoConfiguration 加载的方式有两种，一种是在 `@EnableAutoConfiguration` 的 `exclude` 属性中定义这个配置类的类名，另一种方式是在 `spring.autoconfigure.exclude` 配置中定义配置类的类名。一般更推荐前者，因为这种场景一般是在开发期都可以确定的。
 
-# 条件化加载
+## 条件化加载
 
 条件化加载是在 Spring 4 中引入的新特性，而到了 Spring Boot 配合自动装载才真正发挥出其强大的功能。
 
@@ -94,7 +94,7 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 
 而 Spring Boot 遵从约定大于配置，每一个 AutoConfiguration 都会根据项目中是否引入了必要的依赖，以及是否配置了必须的配置项决定是否加载，完美的契合了条件化加载的使用场景。
 
-## 举例
+### 举例
 
 ![](/uploads/15032299342952.jpg)
 
@@ -105,17 +105,17 @@ Spring Boot 中的所有配置类都在 `spring-boot-autoconfigure` 项目中，
 - `@ConditionalOnMissingBean`：指定的 Bean 不存在
 - `@ConditionalOnProperty`：指定的配置项满足条件（存在、等于某个值、不等于某个值等）
 
-## @ConditionalOnClass
+### @ConditionalOnClass
 
 由于用户定义的配置类永远会在 AutoConfiguration 之前进行装载，所以 `@ConditionalOnMissingBean` 可以很轻易的实现使用者自定义的 Bean 替代掉自动生成的 Bean 的功能。
 
-## @Profile
+### @Profile
 
 另一个比较特殊的注解是 `@Profile`，这个注解允许使用者通过 `spring.profiles.active` 来控制一些 Bean 是否初始化，或是初始化不同的实例。
 
 `@Profile` 实际是在 Spring 3 就有的功能，但是在 Spring 4 条件化注解出现后，其实现也通过相关 API 进行重写了。
 
-## 自定义条件
+### 自定义条件
 
 虽然 Spring Boot 已经提供了很多常用的条件实现，但是在某些特殊场景依旧需要自定义加载条件。
 
@@ -189,7 +189,7 @@ public class LogbackSentryAppenderInitializer {
 }
 ```
 
-## 加载状态
+### 加载状态
 
 配置 `debug` 属性启动 Spring Boot 应用时，会打印一系列 AUTO-CONFIGURATION REPORT 的记录。
 
@@ -197,7 +197,7 @@ public class LogbackSentryAppenderInitializer {
 
 ![](/uploads/15032348544518.jpg)
 
-# 配置项映射
+## 配置项映射
 
 在配置文件中定义属性是 AutoConfiguration 唯一与使用者相关的功能。
 

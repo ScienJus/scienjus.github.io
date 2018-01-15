@@ -8,7 +8,7 @@ permalink: spring-cloud-refresh
 
 <!--more-->
 
-# ContextRefresher
+## ContextRefresher
 
 顾名思义，`ContextRefresher` 用于刷新 Spring 上下文，在以下场景会调用其 `refresh` 方法。
 
@@ -58,7 +58,7 @@ capture = builder.run();
 
 2. 调用 `RefreshScope.refreshAll` 方法。
 
-# EnvironmentChangeEvent
+## EnvironmentChangeEvent
 
 在上文中，`ContextRefresher` 发布了一个 `EnvironmentChangeEvent` 事件，接下来看看这个事件产生了哪些影响。
 
@@ -75,7 +75,7 @@ capture = builder.run();
 
 这两段逻辑分别可以在 `ConfigurationPropertiesRebinder` 和 `LoggingRebinder` 中看到。
 
-## ConfigurationPropertiesRebinder
+### ConfigurationPropertiesRebinder
 
 这个类乍一看代码量特别少，只需要一个 `ConfigurationPropertiesBeans` 和一个 `ConfigurationPropertiesBindingPostProcessor`，然后调用 `rebind` 每个 Bean 即可。但是这两个对象是从哪里来的呢？
 
@@ -151,11 +151,11 @@ protected Object initializeBean(final String beanName, final Object bean, RootBe
 
 之后 `ConfigurationPropertiesRebinder` 就完成整个重新绑定流程了。
 
-## LoggingRebinder
+### LoggingRebinder
 
 相比之下 `LoggingRebinder` 的逻辑要简单许多，它只是调用了 `LoggingSystem` 的方法重新设置了日志级别，具体逻辑就不在本文详述了。
 
-# RefreshScope
+## RefreshScope
 
 首先看看这个类的注释：
 
@@ -221,7 +221,7 @@ public void destroy() {
 
 而在清空缓存后，它还会发出一个 `RefreshScopeRefreshedEvent` 事件，在某些 Spring Cloud 的组件中会监听这个事件并作出一些反馈。
 
-## Zuul
+### Zuul
 
 Zuul 在收到这个事件后，会将自身的路由设置为 dirty 状态：
 
@@ -266,7 +266,7 @@ if (this.dirty) {
 }
 ```
 
-## Eureka
+### Eureka
 
 在 Eureka 收到该事件时，对于客户端和服务端都有不同的处理方式：
 
@@ -301,7 +301,7 @@ protected static class EurekaClientConfigurationRefresher {
 
 而对于服务端来说，`EurekaAutoServiceRegistration` 会将服务端先标记为下线，在进行重新上线。
 
-# 总结
+## 总结
 
 至此，Spring Cloud 的热更新流程就到此结束了，从这些源码中可以总结出以下结论：
 

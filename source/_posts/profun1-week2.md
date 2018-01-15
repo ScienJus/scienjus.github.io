@@ -8,7 +8,7 @@ permalink: profun1-week2
 
 <!--more-->
 
-# 高阶函数
+## 高阶函数
 
 函数式语言将函数作为一等公民，这意味着函数可以像其他值一样作为参数或是返回值，这种做法提高了程序的灵活性。
 
@@ -64,7 +64,7 @@ def sumFactorials(a: Int, b: Int) = sum(fact, a, b)
 
 在 Scala 中， `A => B` 代表一个接受一个 `A` 类型参数，并返回一个 `B` 类型参数的方法。例如上文中的 `Int => Int` 代表将一个整数转换为另一个整数的方法。
 
-# 匿名函数
+## 匿名函数
 
 在使用高阶函数时，不可避免的需要定义很多小函数，但是其实很多时候不需要通过 `def` 定义函数并为其起一个名字。
 
@@ -122,7 +122,7 @@ def sumInts(a: Int, b: Int) = sum(x => x, a, b)
 def sumCubes(a: Int, b: Int) = sum(x => x * x * x, a, b)
 ```
 
-# 柯里化
+## 柯里化
 
 再次观察上面的函数，它们是否还有进一步优化的空间？
 
@@ -203,7 +203,7 @@ def f = (args1 ⇒ (args2 ⇒ ...(argsn ⇒ E)...)
 (Int => Int) => ((Int, Int) => Int)
 ```
 
-# Scala 语法汇总
+## Scala 语法汇总
 
 以下定义中所用到的符号的含义为：
 
@@ -211,7 +211,7 @@ def f = (args1 ⇒ (args2 ⇒ ...(argsn ⇒ E)...)
 - `[...]` 0 或 1 个
 - `{...}` 0 或 多个
 
-## 类型（Types）
+### 类型（Types）
 
 ![Types](/uploads/types.png)
 
@@ -222,7 +222,7 @@ def f = (args1 ⇒ (args2 ⇒ ...(argsn ⇒ E)...)
 - 字符串
 - 函数：像是 `Int => Int` 或者 `(Int, Int) => Int`
 
-## 表达式（Expressions）
+### 表达式（Expressions）
 
 ![Expressions](/uploads/expressions.png)
 
@@ -237,7 +237,7 @@ def f = (args1 ⇒ (args2 ⇒ ...(argsn ⇒ E)...)
 - 代码块：例如 `{ val x = math.abs(y) ; x * 2 }`
 - 匿名函数：例如 `x => x + 1`
 
-## 定义（Definitions）
+### 定义（Definitions）
 
 ![Definitions](/uploads/definitions.png)
 
@@ -251,7 +251,7 @@ def f = (args1 ⇒ (args2 ⇒ ...(argsn ⇒ E)...)
 - 值调用：例如 `(x: Int)`
 - 名称调用：例如 `(y: => Double)`
 
-# 函数和数据
+## 函数和数据
 
 本节通过一个例子介绍如何在 Scala 中使用函数创建和封装结构体。
 
@@ -264,7 +264,7 @@ def addRationalDenominator(n1: Int, d1: Int, n2: Int, d2: Int): Int
 
 但是这样做明显增加了代码的维护成本，一种更好的方式是将分子和分母共同维护在一个结构体中。
 
-## 类
+### 类
 
 在 Scala 中，可以用下面这种方式定义一个类（Classes）：
 
@@ -282,7 +282,7 @@ class Rational(x: Int, y: Int) {
 
 Scala 会保证定义的名称和值在不同的命名空间（Namespace）中，所以多个 Rational 定义彼此之间不会冲突（？）
 
-## 对象
+### 对象
 
 每个类型的元素被称为对象（Objects），通过 `new` 加上构造方法可以创建一个新的对象：
 
@@ -298,7 +298,7 @@ x.numer                    > 1
 x.denom                    > 2
 ```
 
-## 方法
+### 方法
 
 在拥有 Rational 对象之后，就可以对其定义一些计算函数了：
 
@@ -339,7 +339,7 @@ val z = new Rational(3, 2)
 x.add(y).add(z)
 ```
 
-## 抽象
+### 抽象
 
 在上面的例子中，可以发现通过计算而得出的分数有可能不是最简形态（例如 `3/6` 可以被约为 `1/2`）。
 
@@ -376,7 +376,7 @@ class Rational(x: Int, y: Int) {
 
 抽象是软件工程中的基石。
 
-## 自引用
+### 自引用
 
 在类的内部可以使用 `this` 关键词指代当前执行方法的对象，也就是自引用（Self Reference）。
 
@@ -388,7 +388,7 @@ class Rational(x: Int, y: Int) {  ...  def less(that: Rational) =    this.num
   def max(that: Rational) =    if (this.less(that)) that else this}
 ```
 
-## 前提检验
+### 前提检验
 
 假设 Rational 类要求分母必须是一个正整数，就可以通过 `require` 方法进行校验：
 
@@ -398,7 +398,7 @@ class Rational(x: Int, y: Int) {  require(y > 0, ”denominator must be positiv
 
 `require` 是一个预定义方法，它需要一个条件以及可选的提示信息。当条件为假时，将会抛出一个携带提示信息的 `IllegalArgumentException` 异常。
 
-## 断言
+### 断言
 
 另一种校验的方式是使用断言（Assert），它同样接受一个条件和可选的提示信息，而当条件不满足时，它会抛出 `AssertionError` 异常。
 
@@ -407,7 +407,7 @@ class Rational(x: Int, y: Int) {  require(y > 0, ”denominator must be positiv
 - `require` 适合在方法执行前校验外部传入的参数
 - `assert` 用于校验方法执行过程中的逻辑
 
-## 构造函数
+### 构造函数
 
 在 Scala 中，类定义就会隐式的引入一个构造函数，它被称为主构造函数（Primary Constructor）。
 
@@ -422,7 +422,7 @@ class Rational(x: Int, y: Int) {  require(y > 0, ”denominator must be positiv
 class Rational(x: Int, y: Int) {  def this(x: Int) = this(x, 1)  ...}new Rational(2) > 2/1
 ```
 
-# 类中的代换模型
+## 类中的代换模型
 
 在之前的笔记中有提到 Scala 的函数执行是通过一种称为代换模型的计算模型，在类和对象中也是如此。
 
@@ -477,7 +477,7 @@ new Rational(1, 2).numer * new Rational(2, 3).denom < new Rational(2, 3).numer *
 true
 ```
 
-# 运算符
+## 运算符
 
 原则上来说，通过 Rational 定义的分数和整数没有什么区别，但是在使用时却有一些差异。
 
@@ -485,7 +485,7 @@ true
 
 在 Scala 中，可以通过两步消除这种差异。
 
-## 中缀运算
+### 中缀运算
 
 任何只有一个参数的方法都可以使用中缀运算符（Infix Operator）的方式进行调用：
 
@@ -495,7 +495,7 @@ r less s = r.less(s)
 r max s  = r.max(s)
 ```
 
-## 标识符
+### 标识符
 
 在 Scala 中标识符可以有两种形态：
 

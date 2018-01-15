@@ -6,11 +6,11 @@ permalink: build-wordpress-by-aliyun
 
 经过一上午的努力，博客终于搭建好了，在此将整体流程介绍一下，供各位参考。
 
-# 域名注册
+## 域名注册
 
 拥有一个独立域名是建立个人博客中重要的一环，注册域名可以选择 GoDaddy 或者万网。GoDaddy 经常会有优惠活动，可以以很便宜的价格买到理想的域名。可是我注册时并没有赶上，于是就在万网上注册了首年 39 元的 .com 域名，域名注册成功后暂时放置，等到购买完服务器后才会用到。
 
-# 购买服务器
+## 购买服务器
 
 服务器的地域是最先需要考虑的问题，国外的服务器在大陆访问速度可能会慢一些，但是会有一个很大的优点就是域名不需要备案，而国内的服务器虽然访问速度较快但域名备案会比较麻烦(由于我选择了阿里云，所以也在痛苦备案中)。 这里简单的介绍一下阿里云主机的购买过程：
 
@@ -19,7 +19,7 @@ permalink: build-wordpress-by-aliyun
 3.  系统镜像我选择的是CentOs6.5的原生镜像，如果觉得配置环境比较困难或者嫌麻烦的话可以选择WordPress建站镜像，服务器则会自动搭建好WordPress的运行环境。 ![购买配置](http://www.scienjus.com/wp-content/uploads/2015/07/aliyun.png)
 4.  付款成功后进入管理控制台，会发现已经有一台ECS主机正在启动中，新买的主机需要大概5分钟左右启动，然后就会变成运行中的状态。需要记住几个信息：服务器的外网ip地址，服务器的用户名(root)和服务器的密码(在购买时设置的密码)。
 
-# 搭建环境
+## 搭建环境
 
 运行 WordPress 需要安装 Apache（或 Nginx）、PHP、MySQL 环境，流程如下：
 
@@ -136,7 +136,7 @@ permalink: build-wordpress-by-aliyun
 
 到此为止所有环境均已搭建完毕，接下来只需要安装 WordPress 即可完成建站了。
 
-# 安装 WordPress
+## 安装 WordPress
 
 1.  首先到官网上获取最新版的 WordPress，例如我安装时最新版为 `4.2.2`，下载地址为[https://cn.wordpress.org/wordpress-4.2.2-zh_CN.zip](https://cn.wordpress.org/wordpress-4.2.2-zh_CN.zip)
 2.  通过 SSH 登录到服务器，切换到网站根目录，下载这个文件
@@ -187,7 +187,7 @@ permalink: build-wordpress-by-aliyun
 
 6.  刷新浏览器，如果看到以下页面即可开始愉快的建站之旅 ![wordpress](http://www.scienjus.com/wp-content/uploads/2015/07/wordpress.png)
 
-# 善后
+## 善后
 
 1.  配置完网站后，记得将之前关闭的防火墙重新开启，并开启 80 端口的访问
 

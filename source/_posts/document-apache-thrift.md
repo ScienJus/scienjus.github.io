@@ -8,7 +8,7 @@ permalink: document-apache-thrift
 
 <!--more-->
 
-# IDL 共享的问题
+## IDL 共享的问题
 
 一般在相同语言的多个项目中如何共享 IDL 呢？
 
@@ -18,7 +18,7 @@ permalink: document-apache-thrift
 
 一般的 RPC 服务会存在一个 Service 和多个 Client，在我们开发的 Python 和 Java 项目中，除了 Java Client 使用 Java Service 可以用上述的方式直接共享生成后的 class 文件，其他使用方式都需要将 IDL 文件放入项目源码中，这样就会导致一份 IDL 会存在与多个项目中，而随着项目的迭代，很难做到所有项目之间的版本是相同的，混乱由此而生。而 Thrift 序列化的高效只建立在 Field Id 作为序列化索引实现的基础上，一旦 Field Id 出现了不一致，就会出现很难排查的数据丢失问题。
 
-# 解决方案
+## 解决方案
 
 面对这个问题，核心诉求就是希望 IDL 可以只存一份，并对所有项目共享（而不仅仅是通过 Java/Maven 的方式在部分语言中共享）。
 
@@ -31,7 +31,7 @@ permalink: document-apache-thrift
 
 比较遗憾的是：这种做法在 Gradle 中或许只是几行代码的事情，而在 Maven 中却需要额外的添加自定义插件或是去魔改 Maven Thrift Plugin，而前者依旧会增加项目的复杂度，后者的话我连这个插件的源码托管在何处都不知道。
 
-# 文档化
+## 文档化
 
 回到问题的源头，我们究竟为什么希望所有项目中共享的 IDL 完全同步？
 
@@ -39,15 +39,15 @@ IDL 不同步带来的最坏结果就是由序列化/反序列化无法对应导
 
 而这些在 HTTP/JSON 服务中也会出现，而且其没有任何强约束办法，只能通过 Swagger 这类文档工具进行信息同步。换言之，对于一个能够做好向后兼容的服务来说（当然这也是一个服务的最基本要求），调用方的所有更新都应该是可选的，我们只需要一个平台去展示每一个版本的 IDL 和其描述信息（文档）。
 
-# 实施
+## 实施
 
-## Armeria
+### Armeria
 
 [Armeria][1] 由 Netty 作者 Trustin Lee 开发的 RPC 框架，也是我目前知道的唯一可以将 Thrift 生成文档的框架。
 
 但是由于一些坑，我们无法直接使用 Armeria 生成整套文档
 
-### Thrift Java Compiler 的坑
+#### Thrift Java Compiler 的坑
 
 Thrift Java Compiler 本身的有一个 Bug，当 IDL 中 Struct 没有严格按照使用顺序定义时，生成的 class 文件中的 `FieldMetaData` 是错误的。
 
@@ -83,13 +83,13 @@ tmpMap.put(B._Fields.A, new FieldMetaData("a", (byte)3, new FieldValueMetaData((
 
 可以看到 `StructMetaData` 变成了 `FieldValueMetaData`，并且丢失了 Class 信息。
 
-### 扩展性问题
+#### 扩展性问题
 
 Armeria 的文档系统是建立在其基础方案之上的，这意味着如果你本身就使用其作为 RPC 框架，那么生成文档只需要额外的加一个 `DocService` 即可。并且它还能直接在文档页面中通过 [TText][2] 的协议方式直接进行在线调用。
 
 但是我目前所使用的系统并没有直接使用 Armeria，而是内部通过 Etcd 实现的 Thrift 服务注册与发现，这样使得不光没办法使用自带的在线调用功能，连生成文档界面都需要额外引入 Thrift 相关类并将空实现注册到 Armeria，整个系统能直接用到的功能非常少。
 
-## thriftpy
+### thriftpy
 
 如果你之前了解过 Swagger（一个 HTTP 文档的协议规范），你应该能明白一个良好的文档工具最重要的就是 Schema，它能够将生成程序和页面渲染程序直接解耦，方便对已有组件进行改造和复用。
 
@@ -119,7 +119,7 @@ idl/
 
 目前我将其托管为了一个 Gitlab Pages 项目，只要该项目由变更（多数为 IDL 修改）就会触发 Ci build 重新生成最新的文档。
 
-# 一些思考
+## 一些思考
 
 长久以来用 Thrift 积累了很多经验和疑惑，现在个人认为对于一般小公司，如果网络请求还没有成为整个 RPC 调用的性能瓶颈，使用 HTTP/JSON API 可能会更适合一些，毕竟其拥有更多的可扩展能力以及更丰富的生态环境，能够节省很多精力（例如 Java 就可以选择 Netflix 全家桶啊！）。
 
