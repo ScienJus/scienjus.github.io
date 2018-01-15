@@ -1,13 +1,13 @@
 <!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 阿里云搭建 WordPress 全过程 · ScienJus's Blog</title><meta name="description" content="阿里云搭建 WordPress 全过程 - ScienJus"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://www.scienjus.com/atom.xml" title="ScienJus's Blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/ScienJus" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/ScienJus" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="/about/" target="_self" class="nav-list-link">ABOUT</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">阿里云搭建 WordPress 全过程</h1><div class="post-info">Jul 1, 2015</div><div class="post-content"><p>经过一上午的努力，博客终于搭建好了，在此将整体流程介绍一下，供各位参考。</p>
-<h1 id="域名注册"><a href="#域名注册" class="headerlink" title="域名注册"></a>域名注册</h1><p>拥有一个独立域名是建立个人博客中重要的一环，注册域名可以选择 GoDaddy 或者万网。GoDaddy 经常会有优惠活动，可以以很便宜的价格买到理想的域名。可是我注册时并没有赶上，于是就在万网上注册了首年 39 元的 .com 域名，域名注册成功后暂时放置，等到购买完服务器后才会用到。</p>
-<h1 id="购买服务器"><a href="#购买服务器" class="headerlink" title="购买服务器"></a>购买服务器</h1><p>服务器的地域是最先需要考虑的问题，国外的服务器在大陆访问速度可能会慢一些，但是会有一个很大的优点就是域名不需要备案，而国内的服务器虽然访问速度较快但域名备案会比较麻烦(由于我选择了阿里云，所以也在痛苦备案中)。 这里简单的介绍一下阿里云主机的购买过程：</p>
+<h2 id="域名注册"><a href="#域名注册" class="headerlink" title="域名注册"></a>域名注册</h2><p>拥有一个独立域名是建立个人博客中重要的一环，注册域名可以选择 GoDaddy 或者万网。GoDaddy 经常会有优惠活动，可以以很便宜的价格买到理想的域名。可是我注册时并没有赶上，于是就在万网上注册了首年 39 元的 .com 域名，域名注册成功后暂时放置，等到购买完服务器后才会用到。</p>
+<h2 id="购买服务器"><a href="#购买服务器" class="headerlink" title="购买服务器"></a>购买服务器</h2><p>服务器的地域是最先需要考虑的问题，国外的服务器在大陆访问速度可能会慢一些，但是会有一个很大的优点就是域名不需要备案，而国内的服务器虽然访问速度较快但域名备案会比较麻烦(由于我选择了阿里云，所以也在痛苦备案中)。 这里简单的介绍一下阿里云主机的购买过程：</p>
 <ol>
 <li>打开<a href="http://www.aliyun.com/" target="_blank" rel="external">阿里云官网</a>，注册用户并登陆后点击购买云服务器ECS进入选择配置页面。</li>
 <li>如果是Linux系统的话不需要选择太好的配置，这里我选择的是单核1G内存20G系统盘，除了节点的地域其他的配置都是可以随时升级的，唯独地域是不可更换的，所以如果需要购买其他服务或者多台云主机，请事先考虑好地域选择，因为服务或主机之间不能跨地域交互。</li>
 <li>系统镜像我选择的是CentOs6.5的原生镜像，如果觉得配置环境比较困难或者嫌麻烦的话可以选择WordPress建站镜像，服务器则会自动搭建好WordPress的运行环境。 <img src="http://www.scienjus.com/wp-content/uploads/2015/07/aliyun.png" alt="购买配置"></li>
 <li>付款成功后进入管理控制台，会发现已经有一台ECS主机正在启动中，新买的主机需要大概5分钟左右启动，然后就会变成运行中的状态。需要记住几个信息：服务器的外网ip地址，服务器的用户名(root)和服务器的密码(在购买时设置的密码)。</li>
 </ol>
-<h1 id="搭建环境"><a href="#搭建环境" class="headerlink" title="搭建环境"></a>搭建环境</h1><p>运行 WordPress 需要安装 Apache（或 Nginx）、PHP、MySQL 环境，流程如下：</p>
+<h2 id="搭建环境"><a href="#搭建环境" class="headerlink" title="搭建环境"></a>搭建环境</h2><p>运行 WordPress 需要安装 Apache（或 Nginx）、PHP、MySQL 环境，流程如下：</p>
 <ol>
 <li>通过 SSH 远程连接云主机，这里我使用的是 putty（一个绿色小巧的远程连接工具），首先打开 putty ,在 Host Name 一栏填入服务器的外网 ip，Port 默认为 22 ，Connection type 默认为 SSH，之后点击 open，会弹出一个命令行窗口，如果连接上了会提示输入用户名和密码，将服务器的用户名和密码输入即可连接成功。 <img src="http://www.scienjus.com/wp-content/uploads/2015/07/putty.png" alt="putty配置"></li>
 <li><p>在阿里云的 CentOS 系统下安装软件一般有3种选择：</p>
@@ -68,7 +68,7 @@
 </li>
 </ol>
 <p>到此为止所有环境均已搭建完毕，接下来只需要安装 WordPress 即可完成建站了。</p>
-<h1 id="安装-WordPress"><a href="#安装-WordPress" class="headerlink" title="安装 WordPress"></a>安装 WordPress</h1><ol>
+<h2 id="安装-WordPress"><a href="#安装-WordPress" class="headerlink" title="安装 WordPress"></a>安装 WordPress</h2><ol>
 <li>首先到官网上获取最新版的 WordPress，例如我安装时最新版为 <code>4.2.2</code>，下载地址为<a href="https://cn.wordpress.org/wordpress-4.2.2-zh_CN.zip" target="_blank" rel="external">https://cn.wordpress.org/wordpress-4.2.2-zh_CN.zip</a></li>
 <li><p>通过 SSH 登录到服务器，切换到网站根目录，下载这个文件</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd /home/www/blog</span><br><span class="line">wget https://cn.wordpress.org/wordpress-4.2.2-zh_CN.zip</span><br></pre></td></tr></table></figure>
@@ -89,7 +89,7 @@
 <li><p>刷新浏览器，如果看到以下页面即可开始愉快的建站之旅 <img src="http://www.scienjus.com/wp-content/uploads/2015/07/wordpress.png" alt="wordpress"></p>
 </li>
 </ol>
-<h1 id="善后"><a href="#善后" class="headerlink" title="善后"></a>善后</h1><ol>
+<h2 id="善后"><a href="#善后" class="headerlink" title="善后"></a>善后</h2><ol>
 <li><p>配置完网站后，记得将之前关闭的防火墙重新开启，并开启 80 端口的访问</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vi /etc/sysconfig/iptables</span><br></pre></td></tr></table></figure>
 <p>在最底部追加代码</p>

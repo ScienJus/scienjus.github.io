@@ -1,16 +1,16 @@
-<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> [Functional Programming Principles in Scala] 学习笔记（一） 函数调用 · ScienJus's Blog</title><meta name="description" content="[Functional Programming Principles in Scala] 学习笔记（一） 函数调用 - ScienJus"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://www.scienjus.com/atom.xml" title="ScienJus's Blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/ScienJus" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/ScienJus" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="/about/" target="_self" class="nav-list-link">ABOUT</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">[Functional Programming Principles in Scala] 学习笔记（一） 函数调用</h1><div class="post-info">Apr 4, 2017</div><div class="post-content"><h1 id="开始之前"><a href="#开始之前" class="headerlink" title="开始之前"></a>开始之前</h1><ol>
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> [Functional Programming Principles in Scala] 学习笔记（一） 函数调用 · ScienJus's Blog</title><meta name="description" content="[Functional Programming Principles in Scala] 学习笔记（一） 函数调用 - ScienJus"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://www.scienjus.com/atom.xml" title="ScienJus's Blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/ScienJus" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/ScienJus" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="/about/" target="_self" class="nav-list-link">ABOUT</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">[Functional Programming Principles in Scala] 学习笔记（一） 函数调用</h1><div class="post-info">Apr 4, 2017</div><div class="post-content"><h2 id="开始之前"><a href="#开始之前" class="headerlink" title="开始之前"></a>开始之前</h2><ol>
 <li>这篇笔记是 Coursera 上的 <a href="https://www.coursera.org/learn/progfun1" target="_blank" rel="external">Functional Programming Principles in Scala</a> 课程，主讲者是 Scala 的作者 Martin Odersky，所以还是相当推荐的。</li>
 <li>英文能力渣 + 中文表达能力渣，如果错误信息欢迎指正</li>
 </ol>
 <hr>
-<h1 id="编程范式"><a href="#编程范式" class="headerlink" title="编程范式"></a>编程范式</h1><p>在目前的编程中主要有三种范式：</p>
+<h2 id="编程范式"><a href="#编程范式" class="headerlink" title="编程范式"></a>编程范式</h2><p>在目前的编程中主要有三种范式：</p>
 <ol>
 <li>函数式编程（Functional Programming）</li>
 <li>命令式编程（Imperative Programming）</li>
 <li>逻辑式编程（Logic Programming）</li>
 </ol>
 <p>除此之外，还有一些人认为面向对象编程（Object Oriented Programming）也是一种范式。</p>
-<h2 id="命令式编程"><a href="#命令式编程" class="headerlink" title="命令式编程"></a>命令式编程</h2><p>命令式编程主要由可变变量、赋值语句和程序控制语句（例如 if..then..else 和 loops）组成。最普遍的理解方式是冯诺依曼计算机的计算序列，它们有这样的对应关系：</p>
+<h3 id="命令式编程"><a href="#命令式编程" class="headerlink" title="命令式编程"></a>命令式编程</h3><p>命令式编程主要由可变变量、赋值语句和程序控制语句（例如 if..then..else 和 loops）组成。最普遍的理解方式是冯诺依曼计算机的计算序列，它们有这样的对应关系：</p>
 <ol>
 <li>可变变量 ≈ 内存空间</li>
 <li>变量引用 ≈ 加载指令</li>
@@ -25,12 +25,12 @@
 <p>另一个例子是字符串通过 <code>++</code> 串联的法则：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(a ++ b) ++ c = a ++ (b ++ c)</span><br></pre></td></tr></table></figure>
 <p>它也不会通过操作符修改字符串中的字符序列而保证法则成立（例如在 Java 中，字符串是不可变的）。</p>
-<h2 id="函数式编程"><a href="#函数式编程" class="headerlink" title="函数式编程"></a>函数式编程</h2><ol>
+<h3 id="函数式编程"><a href="#函数式编程" class="headerlink" title="函数式编程"></a>函数式编程</h3><ol>
 <li>狭义而言，函数式编程是没有赋值、可变变量、循环等控制结构的编程手段。</li>
 <li>广义而言，函数式编程以函数为重点。函数可以作为一个值被创建、使用和组合。</li>
 <li>在函数式编程语言中，这一切都会变得很容易。</li>
 </ol>
-<h2 id="函数式编程语言"><a href="#函数式编程语言" class="headerlink" title="函数式编程语言"></a>函数式编程语言</h2><ol>
+<h3 id="函数式编程语言"><a href="#函数式编程语言" class="headerlink" title="函数式编程语言"></a>函数式编程语言</h3><ol>
 <li>狭义而言，函数式编程语言是没有赋值、可变变量、循环等控制结构的编程语言。</li>
 <li>广义而言，函数式编程语言允许构建以函数为重点的程序。</li>
 <li>函数在函数式编程语言中是第一等公民（First-Class Citizens），这意味着：<ol>
@@ -40,7 +40,7 @@
 </ol>
 </li>
 </ol>
-<h2 id="现有的函数式编程语言"><a href="#现有的函数式编程语言" class="headerlink" title="现有的函数式编程语言"></a>现有的函数式编程语言</h2><p>狭义而言：</p>
+<h3 id="现有的函数式编程语言"><a href="#现有的函数式编程语言" class="headerlink" title="现有的函数式编程语言"></a>现有的函数式编程语言</h3><p>狭义而言：</p>
 <ol>
 <li>Pure Lisp, XSLT, XPath, XQuery, FP</li>
 <li>Haskell（不包含 I/O 单元或 UnsafePerformIO）</li>
@@ -67,28 +67,28 @@
 <li>2005 F#</li>
 <li>2007 Clojure</li>
 </ul>
-<h1 id="求值策略"><a href="#求值策略" class="headerlink" title="求值策略"></a>求值策略</h1><h2 id="传值调用（Call-by-value）"><a href="#传值调用（Call-by-value）" class="headerlink" title="传值调用（Call by value）"></a>传值调用（Call by value）</h2><p>假设有一个函数 <code>sumOfSquares</code> 用于求两个数字平方之和，在传值调用时，它的计算步骤为：</p>
+<h2 id="求值策略"><a href="#求值策略" class="headerlink" title="求值策略"></a>求值策略</h2><h3 id="传值调用（Call-by-value）"><a href="#传值调用（Call-by-value）" class="headerlink" title="传值调用（Call by value）"></a>传值调用（Call by value）</h3><p>假设有一个函数 <code>sumOfSquares</code> 用于求两个数字平方之和，在传值调用时，它的计算步骤为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sumOfSquares(3, 2 + 2)</span><br><span class="line">sumOfSquares(3, 4)</span><br><span class="line">square(3) + square(4) </span><br><span class="line">3 * 3 + square(4) </span><br><span class="line">9 + square(4) </span><br><span class="line">9 + 4 * 4 </span><br><span class="line">9 + 16 </span><br><span class="line">25</span><br></pre></td></tr></table></figure>
 <p>整个执行流程为从左至右的计算函数的所有的表达式参数，然后将参数替换为计算后的值。</p>
 <p>这种表达式求值方案称为代换模型（Substitution Model），核心思想是所有的表达式都可以被其计算出的返回值替换掉，只要这些表达式没有副作用（Side Effects）。</p>
-<h2 id="传名称调用（Call-by-name"><a href="#传名称调用（Call-by-name" class="headerlink" title="传名称调用（Call by name)"></a>传名称调用（Call by name)</h2><p>传名称调用在实际使用参数前并不会计算表达式的值，同样是上面的函数，计算步骤为：</p>
+<h3 id="传名称调用（Call-by-name"><a href="#传名称调用（Call-by-name" class="headerlink" title="传名称调用（Call by name)"></a>传名称调用（Call by name)</h3><p>传名称调用在实际使用参数前并不会计算表达式的值，同样是上面的函数，计算步骤为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sumOfSquares(3, 2 + 2) </span><br><span class="line">square(3) + square(2 + 2)</span><br><span class="line">3 * 3 + square(2 + 2) </span><br><span class="line">9 + square(2 + 2)</span><br><span class="line">9 + (2 + 2) * (2 + 2)</span><br><span class="line">9 + 4 * (2 + 2) </span><br><span class="line">9 + 4 * 4</span><br><span class="line">25</span><br></pre></td></tr></table></figure>
 <p>相比之下，传值调用的优点是每个参数的值只会计算一次，而传名称调用的优点是参数如果没有在函数体中被用到，则根本不需要去计算。</p>
-<h2 id="终止条件"><a href="#终止条件" class="headerlink" title="终止条件"></a>终止条件</h2><p>一个疑问：所有的表达式都可以在有限的步骤内计算为一个值么？</p>
+<h3 id="终止条件"><a href="#终止条件" class="headerlink" title="终止条件"></a>终止条件</h3><p>一个疑问：所有的表达式都可以在有限的步骤内计算为一个值么？</p>
 <p>答案：否，例如 <code>def loop: Int = loop</code>。</p>
 <p>所以在某些情况下，使用传名称调用函数可以顺利结束并得到一个返回值，使用传值调用则不能，例如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">def first(x: Int, y: Int) = x</span><br><span class="line"></span><br><span class="line">first(1, loop)</span><br></pre></td></tr></table></figure>
 <p>Scala 在通常情况下使用传值调用，但是通过 <code>=&gt;</code> 定义参数可以改为传名称调用：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">def constOne(x: Int, y: =&gt; Int) = 1</span><br></pre></td></tr></table></figure>
-<h1 id="条件和值定义"><a href="#条件和值定义" class="headerlink" title="条件和值定义"></a>条件和值定义</h1><h2 id="条件表达式"><a href="#条件表达式" class="headerlink" title="条件表达式"></a>条件表达式</h2><p>Scala 拥有条件表达式 if-else，其用起来很像 Java，但是在 Scala 中它是表达式而不是语句，这意味着可以这样使用：</p>
+<h2 id="条件和值定义"><a href="#条件和值定义" class="headerlink" title="条件和值定义"></a>条件和值定义</h2><h3 id="条件表达式"><a href="#条件表达式" class="headerlink" title="条件表达式"></a>条件表达式</h3><p>Scala 拥有条件表达式 if-else，其用起来很像 Java，但是在 Scala 中它是表达式而不是语句，这意味着可以这样使用：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">def abs(x: Int) = if (x &gt;= 0) x else -x</span><br></pre></td></tr></table></figure>
-<h2 id="值定义"><a href="#值定义" class="headerlink" title="值定义"></a>值定义</h2><p>就像函数的参数可以通过传值或是传名称调用一样，值的定义也可以通过 <code>def</code> 或是 <code>val</code> 进行按名称或是按值的定义。</p>
+<h3 id="值定义"><a href="#值定义" class="headerlink" title="值定义"></a>值定义</h3><p>就像函数的参数可以通过传值或是传名称调用一样，值的定义也可以通过 <code>def</code> 或是 <code>val</code> 进行按名称或是按值的定义。</p>
 <p>例如当使用 <code>def x = loop</code> 时，这是一个有效的赋值。而当时用 <code>val y = loop</code> 时，则会导致一个死循环。</p>
-<h1 id="嵌套函数"><a href="#嵌套函数" class="headerlink" title="嵌套函数"></a>嵌套函数</h1><p>好的函数式编程风格是将一个任务分解为多个小函数。但是其中很多函数我们并不希望用户去直接使用它，基于此可以将这些小函数定义在真正使用的函数内部。</p>
+<h2 id="嵌套函数"><a href="#嵌套函数" class="headerlink" title="嵌套函数"></a>嵌套函数</h2><p>好的函数式编程风格是将一个任务分解为多个小函数。但是其中很多函数我们并不希望用户去直接使用它，基于此可以将这些小函数定义在真正使用的函数内部。</p>
 <p>就像是：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">def sqrt(x: Double) = &#123;</span><br><span class="line">  def sqrtIter(guess: Double, x: Double): Double =</span><br><span class="line">    if (isGoodEnough(guess, x)) guess</span><br><span class="line">    else sqrtIter(improve(guess, x), x)</span><br><span class="line"></span><br><span class="line">  def improve(guess: Double, x: Double) =</span><br><span class="line">    (guess + x / guess) / 2</span><br><span class="line"></span><br><span class="line">  def isGoodEnough(guess: Double, x: Double) =</span><br><span class="line">    abs(square(guess) - x) &lt; 0.001</span><br><span class="line"></span><br><span class="line">  sqrtIter(1.0, x)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>其中 <code>sqrtIter</code>、<code>improve</code>、<code>isGoodEnough</code> 都只是 <code>sqrt</code> 中逻辑的一部分，所以对外只需要暴露这一个函数。</p>
-<h1 id="语句块"><a href="#语句块" class="headerlink" title="语句块"></a>语句块</h1><p>在 Scala 中通过 <code>{ ... }</code> 定义一个语句块。例如：</p>
+<h2 id="语句块"><a href="#语句块" class="headerlink" title="语句块"></a>语句块</h2><p>在 Scala 中通过 <code>{ ... }</code> 定义一个语句块。例如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  val x = f(3)</span><br><span class="line">  x * x</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>语句块有以下特性：</p>
 <ol>
@@ -106,7 +106,7 @@
 <p>例如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">val x = 0 </span><br><span class="line">def f(y: Int) = y + 1 </span><br><span class="line">val result = &#123; </span><br><span class="line">  val x = f(3) </span><br><span class="line">  x * x </span><br><span class="line">&#125; + x</span><br></pre></td></tr></table></figure>
 <p><code>result</code> 的值为 <code>16</code>，因为语句块内的 <code>x</code> 为 4，而语句块外的 <code>x</code> 始终为 <code>0</code>。</p>
-<h1 id="尾递归"><a href="#尾递归" class="headerlink" title="尾递归"></a>尾递归</h1><p>有两个通过递归进行计算的函数，一个是 gcd：</p>
+<h2 id="尾递归"><a href="#尾递归" class="headerlink" title="尾递归"></a>尾递归</h2><p>有两个通过递归进行计算的函数，一个是 gcd：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">def gcd(a: Int, b: Int): Int =</span><br><span class="line">    if (b == 0) a else gcd(b, a % b)</span><br></pre></td></tr></table></figure>
 <p>当调用时它的执行步骤为：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">gcd(14, 21)</span><br><span class="line">if (21 == 0) 14 else gcd(21, 14 % 21)</span><br><span class="line">if (false) 14 else gcd(21, 14 % 21)</span><br><span class="line">gcd(21, 14 % 21)</span><br><span class="line">gcd(21, 14)</span><br><span class="line">if (14 == 0) 21 else gcd(14, 21 % 14)</span><br><span class="line">gcd(14, 7)</span><br><span class="line">gcd(7, 0)</span><br><span class="line">if (0 == 0) 7 else gcd(0, 7 % 0)</span><br><span class="line">7</span><br></pre></td></tr></table></figure>
