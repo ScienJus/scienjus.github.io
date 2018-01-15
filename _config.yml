@@ -23,6 +23,12 @@ code_dir: downloads/code
 i18n_dir: :lang
 skip_render:
 
+archive_generator:
+  per_page: 0
+  yearly: false
+  monthly: false
+  daily: false
+
 # Writing
 new_post_name: :title.md # File name of new posts
 default_layout: post
