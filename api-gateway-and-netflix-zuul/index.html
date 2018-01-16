@@ -70,7 +70,7 @@
 </ul>
 <p>一般来说我们希望只在网络连接失败时进行重试、或是对 5XX 的 GET 请求进行重试（不推荐对 POST 请求进行重试，无法保证幂等性会造成数据不一致）。单台的重试次数可以尽量小一些，重试的节点数尽量多一些，整体效果会更好。</p>
 <p>如果有更加复杂的重试场景，例如需要对特定的某些 API、特定的返回值进行重试，那么也可以通过实现 <code>RequestSpecificRetryHandler</code> 定制逻辑（不建议直接使用 <code>RetryHandler</code>，因为这个子类可以使用很多已有的功能）。</p>
-</div></article></div></main><footer><div class="paginator"><a href="/spring-cloud-refresh/" class="prev">PREV</a><a href="/document-apache-thrift/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+</div></article></div></main><footer><div class="paginator"><a href="/spring-cloud-refresh/" class="prev">上一篇</a><a href="/document-apache-thrift/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
 var disqus_identifier = 'api-gateway-and-netflix-zuul/';
 var disqus_title = '聊聊 API Gateway 和 Netflix Zuul';
 var disqus_url = 'http://www.scienjus.com/api-gateway-and-netflix-zuul/';

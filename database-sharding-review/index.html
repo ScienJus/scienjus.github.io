@@ -70,7 +70,7 @@
 <p><strong>分布式事务</strong></p>
 <p> 一个业务操作可能会有多个数据库操作，所以需要事务来保证这些操作的完整性，但是如果这些操作对应的是多个不同的数据库，就比较麻烦了。我对分布式事务的了解也不是很深，这里就不详细介绍了。</p>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p> 数据库水平分片作为数据库性能瓶颈的最终解决方案，确实可以有效的解决这个问题。但是它将业务逻辑变得非常复杂（主要是关联表冗余和字段冗余，以及这些数据的更新），并且有分布式事务这个难题。所以不到必要时刻，尽量不要轻易尝试数据库分片。而是先去选择对业务影响较小的读写分离，垂直分库等方案。</p>
-</div></article></div></main><footer><div class="paginator"><a href="/download-from-baiduyun-by-thunder/" class="prev">PREV</a><a href="/centos65-java-web-production-environment/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+</div></article></div></main><footer><div class="paginator"><a href="/download-from-baiduyun-by-thunder/" class="prev">上一篇</a><a href="/centos65-java-web-production-environment/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
 var disqus_identifier = 'database-sharding-review/';
 var disqus_title = '数据库水平分片心得';
 var disqus_url = 'http://www.scienjus.com/database-sharding-review/';
