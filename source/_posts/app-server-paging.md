@@ -72,7 +72,7 @@ select * from news_ order by create_date desc limit ($currentPage- 1) * $pagingS
 
 ```
 #cursor 为上一页最后一条新闻的 create_date（如果是第一页则为当前时间），pagingSize 为每页的数据量
-select * from news_ where create_date
+select * from news_ where create_date > $cursor order by create_date desc limit $pagingSize
 ```
 
  从这里可以看出，传统分页的偏移量是固定的，所以会因为数据的新增或减少导致接下来加载数据重复或丢失。而游标分页则不会出现这种情况，因为当数据发生新增和减少时，游标的位置也会相对变化。
@@ -97,7 +97,12 @@ create procedure insert_to_news ()
 begin
     declare i int;
     set i = 0;
-    while i
+    while i <= 1000000 do
+        insert into news_(title_, content_, create_date) values('title', 'content', random_date());
+        set i=i+1;
+    end while;
+    commit;
+end
 ```
 
  使用上面的 SQL 语句创建一个拥有 100w 条数据的`news_`表，分别使用传统分页和游标分页测试一下查询效率：
@@ -108,7 +113,7 @@ select * from news_ order by create_date desc limit 900000, 20;
 
 # 这里的 1911-05-01 20:06:57 是我生成数据中与上边查询对应的游标，请自行替换。
 # 查询时间:0.146s
-select * from news_ where create_date
+select * from news_ where create_date > '1911-05-01 20:06:57' order by create_date desc limit 20;
 ```
 
  可以看出在偏移量较大的情况下，即使没有添加索引游标分页的查询时间都超越传统分页几倍，而在添加了索引之后几乎不会因为偏移量造成任何影响。
