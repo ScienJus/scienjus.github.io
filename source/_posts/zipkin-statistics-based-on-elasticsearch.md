@@ -6,6 +6,8 @@ permalink: zipkin-statistics-based-on-elasticsearch
 
 最近将 Zipkin 的底层存储切换到了 Elasticsearch，相比 Cassandra，Elasticsearch 拥有更加灵活的查询和聚合方式，所以可以完成一些之前做不到的自定义统计，在此记录一下。
 
+<!--more-->
+
 ## 存储结构
 
 Zipkin 的存储是基于 Span 的，每一个 Span 为一个文档，字段有：
