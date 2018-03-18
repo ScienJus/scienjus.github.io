@@ -55,9 +55,9 @@ permalink: zipkin-statistics-based-on-elasticsearch-2
     "error": "read-time-out"
   }
 }
-``` 
+```
 
-会转变为：
+则会转变为：
 
 ```json
 {
