@@ -173,7 +173,7 @@ mockMvc.perform(get("/hello").param("name", "ScienJus"))
                         fieldWithPath("msg").description("Message of the response")))); <2>
 ```
 
-在上面代码中增加了 `requestParameters` 定义请求参数的描述，以及通过 `responseFields` 定义返回值的描述，初次之外，还有 `pathParameters`、`requestHeaders`、`requestFields` 等分别用于描述路径变量、Header 信息、Payload 信息的方法。
+在上面代码中增加了 `requestParameters` 定义请求参数的描述，以及通过 `responseFields` 定义返回值的描述，除此之外，还有 `pathParameters`、`requestHeaders`、`requestFields` 等分别用于描述路径变量、Header 信息、Payload 信息的方法。
 
 需要注意的是，所有增加描述的字段都会在测试请求中进行校验，如果文档中定义的参数在实际的测试中并没有出现，测试会直接失败，这样可以保证文档描述和最终运行结果是一致的。
 
