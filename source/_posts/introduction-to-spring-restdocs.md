@@ -18,7 +18,7 @@ Spring REST Docs 是一个为 Spring 项目生成 API 文档的框架，它通�
 
 首先需要一个 Spring Boot 项目，并通过 MockMvc 编写一些简单的测试。
 
-```
+```java
 @RestController
 public class HelloController {
 
@@ -33,7 +33,7 @@ public class HelloController {
 
 接下来需要为其编写一个测试：
 
-```
+```java
 @WebMvcTest
 @ExtendWith(SpringExtension.class)
 public class HelloControllerTests {
@@ -57,7 +57,7 @@ public class HelloControllerTests {
 
 当使用 MockMvc 时，只需要添加 `spring-restdocs-mockmvc` 依赖：
 
-```
+```xml
 <dependency>
     <groupId>org.springframework.restdocs</groupId>
     <artifactId>spring-restdocs-mockmvc</artifactId>
@@ -67,7 +67,7 @@ public class HelloControllerTests {
 
 之后，需要修改测试代码，添加对应的文档支持：
 
-```
+```java
 @WebMvcTest
 @ExtendWith({RestDocumentationExtension.class, SpringExtension.class}) <1>
 public class HelloControllerTests {
@@ -108,7 +108,7 @@ public class HelloControllerTests {
 
 默认的文档主页可以放在 `src/main/asciidoc/index.adoc` 中，例如：
 
-```
+```adoc
 = Learn Spring REST Docs
 :toc: left
 
@@ -123,7 +123,7 @@ operation::hello[]
 
 编写好文档主页后，需要使用 `asciidoctor-maven-plugin` 使其可以在打包时与片段整合起来，并生成最终的 HTML 文件：
 
-```
+```xml
 <plugin>
     <groupId>org.asciidoctor</groupId>
     <artifactId>asciidoctor-maven-plugin</artifactId>
@@ -161,7 +161,7 @@ operation::hello[]
 
 对于目前这份文档来说，其仅仅记录了最原始的请求信息，却没有任何相关的文字描述，所以接下来需要给请求和返回增加额外的描述信息。
 
-```
+```java
 mockMvc.perform(get("/hello").param("name", "ScienJus"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("msg", "Hello ScienJus!").exists())
