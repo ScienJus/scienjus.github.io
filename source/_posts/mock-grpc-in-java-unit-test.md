@@ -12,7 +12,7 @@ permalink: mock-grpc-in-java-unit-test
 
 以 Spring Cloud Feign 为例，Feign 的定义本身就是完全抽象的 Java 接口，同时每一个 Feign Client 又会注册成一个 Spring Bean，所以就可以通过 Spring 原生提供的 `@MockBean` 进行 mock，例如：
 
-```
+```java
 @SpringBootTest
 @RunWith(SpringRunner.class)
 public class UserServiceTest {
@@ -46,7 +46,7 @@ public class UserServiceTest {
 
 下面是一个最简单的代码实现：
 
-```
+```java
 @RunWith(MockitoJUnitRunner.class)
 public class SimpleGrpcClientTests {
 
@@ -106,7 +106,7 @@ public class SimpleGrpcClientTests {
 
 在大多数情况下的实际场景并没有这么简单，例如我们使用了 [yidongnan/grpc-spring-boot-starter](https://github.com/yidongnan/grpc-spring-boot-starter) 将 gRPC 和 Spring 所结合，其实现了一个 PostBeanProcessor 用于将 Channel 或是 Stub 注入到 Bean 的字段中，例如：
 
-```
+```java
 @Service
 public class GrpcClientService {
 
@@ -128,7 +128,7 @@ public class GrpcClientService {
 
 下面是代码示例：
 
-```
+```java
 @Slf4j
 public class GrpcAnnotations {
 
@@ -205,7 +205,7 @@ public class GrpcAnnotations {
 
 如此一来，使用者只需要在每个测试运行前调用下 `GrpcAnnotations#initMocks` 即可完成所有 Server 的 mock 声明和对应 Client 的注入了。
 
-```
+```java
 @SpringBootTest
 @RunWith(SpringRunner.class)
 public class SpringGrpcClientIntegrationTests {
