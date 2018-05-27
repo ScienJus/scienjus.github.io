@@ -6,6 +6,8 @@ permalink: mock-grpc-in-java-unit-test
 
 最近团队内在推广单元测试，我主要做一些 Java 框架和 CI 环境的支持。我们内部的 RPC 框架主要有 HTTP（Spring Cloud Feign）和 gRPC 两种，而在单元测试中一般需要 mock 跨服务之间的请求，相比之下 gRPC 的 mock 较为复杂，在此详细介绍一下。
 
+<!--more-->
+
 ## Mock Client?
 
 对于大多数 RPC 框架来说，都会有一个封装抽象的比较上层的接口，即不需要考虑序列化以及通信相关的实现。所以只需要直接 mock 这类的接口，作为本地方法调用并返回对应的结果即可，不必进行真实的 RPC 请求。
