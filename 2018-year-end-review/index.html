@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> 2018 年终总结 · ScienJus's Blog</title><meta name="description" content="2018 年终总结 - ScienJus"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://www.scienjus.com/atom.xml" title="ScienJus's Blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/ScienJus" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/ScienJus" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="/about/" target="_self" class="nav-list-link">ABOUT</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">2018 年终总结</h1><div class="post-info">Dec 31, 2018</div><div class="post-content"><p><img src="/uploads/quartet.jpg" alt="心怀大志的三流，就是四流"></p>
+<p>总体来说，对自己今年的表现并不满意…</p>
+<a id="more"></a>
+<h2 id="工作"><a href="#工作" class="headerlink" title="工作"></a>工作</h2><p>今年一整年都在 Mobike 度过，关于 Mobike 这一年的大起大落，各位读者可能了解的很多了，所以我在此只写技术相关的。</p>
+<h3 id="研发效率"><a href="#研发效率" class="headerlink" title="研发效率"></a>研发效率</h3><p>在<a href="http://www.scienjus.com/2017-year-end-review/">去年的总结</a>中我曾经提到，自己对「如何提升整个团队的工作效率」这个话题很感兴趣。所以在今年年初，我加入了新组建的效能团队。</p>
+<p>工程效率是我个人一直很看重的事情，除了擅长实际编码，包括软硬件工具、时间管理、任务管理、沟通等综合能力对我都很重要。并且在这点上我认为自己比大部分人都要做的更好。</p>
+<p>但是一旦这件事涉及到了整个团队就变得很复杂了，我很难去衡量一件事对其他人的意义和对我一样重要，所以只能靠学习一些其他公司的经验掌握一个度量的标准。我比较推荐《The DevOps Handbook》和《SRE 谷歌运维解密》这两本书，前者在公司层面所描述的目标和我所希望达到的目标是近乎一致的，并且其中的很多方法论确实是可操作的。而后者则是我理想成为的开发者，以及希望加入的团队。</p>
+<p>具体到实施上我主要关注 CI/CD 方向，因为这部分工作包含着相对较多的编码时间，以及可以在短期显著地看到效果。对我个人而言，使用 Groovy 写 Jenkins Pipeline 很有趣，即使是 Jenkins 这种五六年前的产品依旧能和现代的很多理念所融合，例如 Infra as Code 或是 Serverless。其次是哪怕真正编写了几百上千行 Shell 之后，我依旧还是只能靠查 StackOverflow 完成功能，但是日常工作中的简单操作变得顺畅了很多，也算是很有用的能力了。</p>
+<h3 id="应用架构"><a href="#应用架构" class="headerlink" title="应用架构"></a>应用架构</h3><p>从我的第一份工作开始，就在写着一版又一版的 Java Framework，在前几年流行的微服务理念下，无非是一套又一套的 RPC、Service Registration and Discovery、Tracing 等组件。</p>
+<p>在 ENJOY 时，因为 Spring Cloud 才刚刚 Release，我们选择了整合已有的开源技术自己编写一套完整的框架：以 Etcd 作为注册中心，Thrift 作为 RPC 实现，Zipkin 作为链路追踪方案，这些在之前的文章中都或多或少的提到过。</p>
+<p>而 Mobike 则采用的是标准的 Spring Cloud Netflix 体系，包括 Consul、Ribbon、Hystrix、Feign、Sleuth 等，所以我也有机会去学习 Spring Cloud 的团队是如何抽象和实现这些功能，虽然没有刻意生啃过源码，但是在漫长的排查问题和二次开发过程中，也基本上对这些组件的实现有了很深的了解，并且对管理一个大型的微服务集群，框架需要提供哪些赋能有了更清楚的认知。</p>
+<p>另一部分内容是关于容器化相关的技术，在离开 ENJOY 时最悔恨的事情就是没有参与公司自研并开源的容器编排系统 <a href="https://github.com/projecteru2" target="_blank" rel="external">Eru</a>，导致自己对容器相关的知识一直似懂非懂。而来到 Mobike 后，在工作中长时间使用了 Swarm 和 Kubernetes 之后，我对其有了更深的了解，并且也解决了许多只看文档不会遇见的问题。目前还在尝试了一些和容器相关的云原生技术，比如 FaaS 和 Service Mesh。</p>
+<p>明年的主要的方向也主要在云原生技术，希望能把 Service Mesh 落地在我司的业务场景，以及能够把自动灰度发布流程完成，虽然后者的可能性不大，但是目标总是要有的:)</p>
+<h3 id="选择"><a href="#选择" class="headerlink" title="选择"></a>选择</h3><p>很遗憾，今年的工作成果在我看来是交上了一份不及格的答卷，我认为其原因是做了很多错误的「选择」。</p>
+<p>从个人能力来说，我一直更偏向于一个「强力协助者」或是「救火队员」，我的技术能力和执行力使我在这一年中帮助无数项目快速发展，为它们快速落地或是解决核心问题。但是很遗憾的是，这些事中没有一件是由我来 Own 的，包括之前也有一些我非常感兴趣的项目，也因为公司内的资源分配问题转让给了其他人。</p>
+<p>在写本文的前几天，我司的数据库团队开始陆续开源他们的<a href="https://github.com/moiot" target="_blank" rel="external">产品</a>（恭喜他们:)），相比之下，我却没有任何积累能带到新的一年，甚至已经对很多事情失去了热情，让我感到非常挫败。</p>
+<p>自称「当年北京最年轻的架构师」的 CMGS 曾经对我说过：「25岁不成事就转行吧」，当时只有 23 岁的我想的是还有那么多时间，我肯定能做出自己可以持续付出热情且为之自豪的作品，然而在还有半年就到了 25 岁的这个时间点，我才发现自己似乎一直在退步。</p>
+<h2 id="学习"><a href="#学习" class="headerlink" title="学习"></a>学习</h2><h3 id="开源项目"><a href="#开源项目" class="headerlink" title="开源项目"></a>开源项目</h3><p>今年唯一能拿出来说的可能是开源项目了，即使我的 Github 数据并不好看。</p>
+<p><img src="/uploads/15467755539032.jpg" alt=""></p>
+<p>我很认同「一定要尝试了解和贡献你所使用的开源项目」，正确的使用开源项目是一项完整的技能，大多数人对其的认知可能只是引入一个依赖库或是中间件，将其按照 Quick Start 运行成功就算完成了，这实际是不正确的。</p>
+<p>从开源项目的选型，到对其文档以及源码的掌握，包括调试方式、拓展点，遇到问题时查找资料的途径，在社区反馈问题的方式，二次开发等等，这些都属于使用开源项目所需要的能力，并且这些综合能力非常重要。</p>
+<p>很多人会认为像是 Spring、MyBatis 这样的成熟框架是不会存在任何 Bug 的，而事实却不是这样。在我还很短的职业生涯中就遇到过很多成熟框架在特殊场景才会出现的 Bug，其中大部分又是由于使用者不够了解所以用了不规范的写法所导致的，没有任何人愿意看到这些愚蠢的问题造成严重的损失，包括开源软件的作者，所以总要有人为此负起责任。</p>
+<p>在今年我所贡献过的开源项目有：</p>
+<ol>
+<li>Zipkin：修复了一个简单的前端 Bug，提了一些 Feature Request，均是我在公司项目中遇到的</li>
+<li>Jenkins：修复了一个 Gitlab 插件的 Bug，也是工作相关</li>
+<li>Spring/Spring-Cloud：反馈过两三个 Bug 并提了 Pull Request，不过因为沟通问题只有 2 个最终合了。还有一些 Feature Request，不过基本上都被否了，后来觉得 Spring Cloud 社区对这种小改动非常谨慎，几乎不会接受，也就不再提了（即使一部分在我看来是 Bug）</li>
+<li>Nuclio：在最开始调研 FaaS 平台时认为它最符合我们的需求，所以在试用时贡献了 Ruby 的运行时，以及修复一些前端 Bug，后来发现问题有点多，社区也不够活跃，就暂时搁置了</li>
+<li>Skywalking：也是在调研 APM 方案时试用了一下，顺手加了一个 agent options 的小增强，以及修复了一个 Hystrix 的 Bug，后来因为某些原因整个 APM 的事都搁置了</li>
+<li>SOFA：纯粹是个人兴趣，我很喜欢学习其他公司的开源方案寻找灵感，因为 SOFA 团队的维护者都比较 nice，以及是国内开源项目里少数真正在运营社区的项目（想想我司用的某些国产开源项目，近一年都没人维护了，真是走在刀尖上），所以交流很愉快，也学习了很多</li>
+</ol>
+<p>总体来看，这些都不是很重要的贡献，但是也和我最初表达的观点一样，我做这些事都只是为了更好地使用我选择的开源软件，并且这样做对我个人的收获也很大，如果还能为整个开源社区产生一些微末的贡献那就更好了。</p>
+<h3 id="博客"><a href="#博客" class="headerlink" title="博客"></a>博客</h3><p>反观今年的博客的数量非常少，仅有四篇，这是一个很大的退步。</p>
+<p>今年其实积攒了很多博客素材，但是大部分最终都没有写完，我总是觉得自己没有办法把握好一篇博客内容的广度与深度，再加上今年的工作很多都是在解决一些细节问题或是小众场景，这些问题很难整理为一篇对读者有意义的文章（举个例子：我花了好几个小时 debug 一个关于 Spring Cloud 的死锁问题，但是我该如何向读者介绍这个问题呢？发一大堆断点 debug 的截图？这些截图又能对读者产生什么价值呢？）。</p>
+<p>不过之前恰好看到 Jake Wharton 发了一个推文「Writing blog posts which are based on presentations you already prepared/presented is crazy easy.」，这个观点我非常赞同，在这之前我也曾经将一篇介绍 Istio 的博客修改为了 Slide 作为内部分享，整个流程无比顺利，只花了不到半天的时间，我想今后一部分博客可能也会通过这种方式进行创作。</p>
+<p>内部分享今年也做的不太好，我本来有非常多的想法，比如介绍 JUnit 5、Kotlin、Reactor 这些在 2018 年编写 Java 应用需要了解的「Modern Java Frameworks」系列，或是编写爬虫、脚本或是日常办公软件这些软技能技能。但是我司很少有单纯的技术交流分享，大部分都是每个部门介绍自己工作的内容，做的产品，而且就是单纯的产品介绍，很少会涉及到技术细节。在这种氛围下我觉得做分享太流于形式了，反而是在耽误我和其他听众的时间。</p>
+<h2 id="生活"><a href="#生活" class="headerlink" title="生活"></a>生活</h2><p>由于最近几年糟糕的生活习惯，今年上半年身体各处都开始显著地产生不适，最为可怕的是我的左眼每隔一段时间会发生一次短暂的视力损失，表现为视野中会慢慢产生一股白雾状覆盖，越来越浓直到眼睛看不清任何东西，紧接着又会慢慢缓解最后消失，整体持续时间不到五分钟。再加上当时因为身边一些事弄得心情很差，非常焦虑和烦躁，整体状态非常差。</p>
+<p>七月的时候觉得这样下去肯定会出事，就开始调整生活习惯和心情。把年初买的 Switch 拆了，办了张健身卡每周做 3-5 次有氧运动，正常饮食和作息。之后很幸运的是身体的不适缓解了很多，眼疾也再也没有出现过，现在想想真的很庆幸。</p>
+<p><img src="/uploads/15467793317447.jpg" alt=""></p>
+<p>后来为了放松心情还坐游轮去了一次日本，游轮上的生活真的很惬意，不需要做任何规划，饿了就去餐厅吃饭，累了就会房间睡觉，平时就在甲板上晒太阳或是在船里闲逛，很好的缓解了我紧绷的精神。</p>
+<p>总体来说今年算是因祸得福把，目前身体状态和精神状态都变得更好了，而且也更加懂得享受生活的重要性。</p>
+</div></article></div></main><footer><div class="paginator"><a href="/mock-grpc-in-java-unit-test/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+var disqus_identifier = '2018-year-end-review/';
+var disqus_title = '2018 年终总结';
+var disqus_url = 'http://www.scienjus.com/2018-year-end-review/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//scienjus.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2019 <a href="http://www.scienjus.com">ScienJus</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-65933410-1",'auto');ga('send','pageview');</script><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();</script></body></html>
