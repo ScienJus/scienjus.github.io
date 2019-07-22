@@ -93,7 +93,7 @@
 <p> 返回数据有两种可能，一种是增量更新的数据小于指定的数量，就直接将全部数据返回（这个数量可以设置的相对大一些），客户端会将这些增量更新的数据添加在已有列表的顶部。但是如果增量更新的数据要大于指定的数量，就会只返回最新的 n 条数据作为第一页，这时候客户端需要清空之前的列表。例如：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    &quot;pagination&quot;: &#123;</span><br><span class="line">       &quot;limit&quot;: 20,</span><br><span class="line">       &quot;total&quot;: 100,</span><br><span class="line">    &#125;,</span><br><span class="line">    &quot;data&quot;: &#123;&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p> 如果<code>total</code>大于<code>limit</code>，说明增量的数据太多所以只返回了第一页，需要清空旧的列表。</p>
-</div></article></div></main><footer><div class="paginator"><a href="/fastroute-spring/" class="prev">PREV</a><a href="/chrome-developer-tools/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+</div></article></div></main><footer><div class="paginator"><a href="/fastroute-spring/" class="prev">上一篇</a><a href="/chrome-developer-tools/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
 var disqus_identifier = 'my-restful-api-best-practices/';
 var disqus_title = '我所认为的RESTful API最佳实践';
 var disqus_url = 'http://www.scienjus.com/my-restful-api-best-practices/';
