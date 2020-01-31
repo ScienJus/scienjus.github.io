@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://www.scienjus.com/about/index.html</loc>
+    
+    <lastmod>2020-01-31T02:38:49.922Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://www.scienjus.com/2019-year-end-review/</loc>
     
     <lastmod>2020-01-24T17:40:15.144Z</lastmod>
@@ -65,28 +72,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/about/index.html</loc>
-    
-    <lastmod>2018-01-15T13:57:17.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/profun1-week1/</loc>
-    
-    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://www.scienjus.com/2017-year-end-review/</loc>
-    
-    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/spring-cloud-refresh/</loc>
     
     <lastmod>2018-01-15T13:50:52.000Z</lastmod>
     
@@ -100,14 +86,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/build-wordpress-by-aliyun/</loc>
-    
-    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/api-gateway-and-netflix-zuul/</loc>
+    <loc>http://www.scienjus.com/profun1-week1/</loc>
     
     <lastmod>2018-01-15T13:50:52.000Z</lastmod>
     
@@ -121,7 +100,14 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/spring-cloud-autoconfiguration/</loc>
+    <loc>http://www.scienjus.com/api-gateway-and-netflix-zuul/</loc>
+    
+    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/build-wordpress-by-aliyun/</loc>
     
     <lastmod>2018-01-15T13:50:52.000Z</lastmod>
     
@@ -129,6 +115,20 @@
   
   <url>
     <loc>http://www.scienjus.com/profun1-week2/</loc>
+    
+    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/spring-cloud-autoconfiguration/</loc>
+    
+    <lastmod>2018-01-15T13:50:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/spring-cloud-refresh/</loc>
     
     <lastmod>2018-01-15T13:50:52.000Z</lastmod>
     
@@ -149,7 +149,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/armeria-circuit-breaker/</loc>
+    <loc>http://www.scienjus.com/my-restful-api-best-practices/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -163,7 +163,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/custom-http-message-converter/</loc>
+    <loc>http://www.scienjus.com/2015-year-end-review/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -171,6 +171,41 @@
   
   <url>
     <loc>http://www.scienjus.com/get-field-annotation-property-by-jackson-contextualserializer/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/building-search-server-with-elasticsearch/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/2016-year-end-review/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/chrome-developer-tools/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/censor-words/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://www.scienjus.com/custom-http-message-converter/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -191,42 +226,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/building-search-server-with-elasticsearch/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/my-restful-api-best-practices/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://www.scienjus.com/database-sharding-review/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/chrome-developer-tools/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/elasticsearch-function-score-query/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/censor-words/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -247,7 +247,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/2015-year-end-review/</loc>
+    <loc>http://www.scienjus.com/armeria-circuit-breaker/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -268,6 +268,13 @@
   </url>
   
   <url>
+    <loc>http://www.scienjus.com/elasticsearch-function-score-query/</loc>
+    
+    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://www.scienjus.com/elasticsearch-in-action-3/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
@@ -276,13 +283,6 @@
   
   <url>
     <loc>http://www.scienjus.com/elasticsearch-in-action-1/</loc>
-    
-    <lastmod>2018-01-15T05:58:11.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://www.scienjus.com/elasticsearch-in-action-2/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -352,7 +352,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/fastroute-spring/</loc>
+    <loc>http://www.scienjus.com/elasticsearch-in-action-2/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     
@@ -366,7 +366,7 @@
   </url>
   
   <url>
-    <loc>http://www.scienjus.com/2016-year-end-review/</loc>
+    <loc>http://www.scienjus.com/fastroute-spring/</loc>
     
     <lastmod>2018-01-15T05:58:11.000Z</lastmod>
     

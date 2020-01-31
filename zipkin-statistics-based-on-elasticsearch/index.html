@@ -42,7 +42,7 @@
 <p> 但是这其中也是有一些坑的，首先是 Zipkin 的 Span 文档量会非常的多，所以无任何过滤条件的聚合请求响应时间非常长。基本上达到一定数量级后，Zipkin UI 加载 Service Name 和 Span Name 的接口就必然会超时了。这时候反而用 Kibana 会比 Zipkin UI 效率更高，因为自定义查询语句无论是功能上还是性能上都是可控的。</p>
 <p> 另外一个坑就是 <code>binaryAnnotations</code> 是一个嵌套文档，但聚合时最终落在统计指标的 <code>duration</code> 却是外层的字段，这在某些聚合语句下会有问题。目前来看最常见的一个场景是想指定一个聚合结果作为排序条件时，被提示 <code>Ordering on a single-bucket aggregation can only be done on its doc_count.</code>，目前还没找到很好地解决办法。</p>
 <p> 其实 Zipkin 在 Cassandra 上存储的方式很好，性能足够支撑大数据量且查询速度也很快。但是切换为 Elasticsearch 之后，查询和聚合的方式丰富了许多，<code>binaryAnnotations</code> 这种字段在文档型存储中就显得比较尴尬的。此时就有了自定义存储结构的价值，可以根据业务定制各种需要存储的额外字段，改造难度也不大。</p>
-</div></article></div></main><footer><div class="paginator"><a href="/profun1-week1/" class="prev">上一篇</a><a href="/2016-year-end-review/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+</div></article></div></main><footer><div class="paginator"><a href="/profun1-week1/" class="prev">PREV</a><a href="/2016-year-end-review/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
 var disqus_identifier = 'zipkin-statistics-based-on-elasticsearch/';
 var disqus_title = '基于 Elasticsearch 的 Zipkin 统计';
 var disqus_url = 'http://www.scienjus.com/zipkin-statistics-based-on-elasticsearch/';
