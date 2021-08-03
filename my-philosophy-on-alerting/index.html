@@ -1,0 +1,116 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title> [笔记] My Philosophy on Alerting · ScienJus's Blog</title><meta name="description" content="[笔记] My Philosophy on Alerting - ScienJus"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/apollo.css"><link rel="search" type="application/opensearchdescription+xml" href="http://www.scienjus.com/atom.xml" title="ScienJus's Blog"></head><body><div class="wrap"><header><a href="/" class="logo-link"><img src="/favicon.png" alt="logo"></a><ul class="nav nav-list"><li class="nav-list-item"><a href="/" target="_self" class="nav-list-link">BLOG</a></li><li class="nav-list-item"><a href="/archives/" target="_self" class="nav-list-link">ARCHIVE</a></li><li class="nav-list-item"><a href="http://weibo.com/ScienJus" target="_blank" class="nav-list-link">WEIBO</a></li><li class="nav-list-item"><a href="https://github.com/ScienJus" target="_blank" class="nav-list-link">GITHUB</a></li><li class="nav-list-item"><a href="/atom.xml" target="_self" class="nav-list-link">RSS</a></li><li class="nav-list-item"><a href="/about/" target="_self" class="nav-list-link">ABOUT</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">[笔记] My Philosophy on Alerting</h1><div class="post-info">Aug 3, 2021</div><div class="post-content"><p>因为最近被各种乱七八糟的告警的搞得很烦，光吐槽啥也不做也不太好，所以在团队内部分享了下这篇文章。</p>
+<a id="more"></a>
+<p>正体是原文中的内容，斜体是我个人的想法。笔记内容和原文不一定完全对应，原文的翻译可以参考<a href="https://zhuanlan.zhihu.com/p/266870885" target="_blank" rel="external">这篇</a>，本文编写后也通过翻译进行了一些校对，确保没有理解错作者的意思，十分感谢译者。</p>
+<p>文章中涉及到的一些名词：</p>
+<ul>
+<li>symptoms：症状，我理解是指一个问题的表因，本文大半的篇幅都在介绍「基于症状的告警」和「基于原因的告警」之间的区别</li>
+<li>causes：原因，我理解是指一个问题的根因，结合上面的 symptoms 举个例子的话，大概就是因为节点宕机导致客户端报错，那么客户端报错是 symptoms，节点宕机是 causes</li>
+<li>page：原文中的定义是任何引起人注意的东西，笔记中统一都称作告警了</li>
+<li>pager：直接翻译就是寻呼机的意思，在原文中指的是处理告警的事</li>
+<li>rule：原文中的定义是告警规则</li>
+<li>alert：原文中的定义是告警的表现形式，例如表格、邮件等</li>
+</ul>
+<h3 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h3><p>如何设置告警规则，或者要设置哪些告警规则，才能让我们更愉悦的值班：</p>
+<ul>
+<li>告警一定要是紧急、重要、真实并且可操作的</li>
+<li>能够体现服务正在出现问题，或是即将出现问题</li>
+<li>避免噪音，过度监控比监控不足更难解决</li>
+<li>对问题进行归类：可用性和基本功能、延迟、数据正确性和针对于特定功能的问题等</li>
+<li>基于症状配置告警是一种更好的方法，能够更加全面且稳定的捕获更多的问题</li>
+<li>在表现出症状的图表中应该包含可能产生的原因，但是不要直接对原因设置告警</li>
+<li>在越上层的系统配置告警，一条告警规则能够发现的问题就越多。但是也不能太上层，否则很难推断出有效的信息，也就无法分辨出真正的原因</li>
+<li>如果想要顺利的（原文是「安静」）进行值班轮换，就需要一个系统去记录需要及时响应，但不需要立刻解决的事项</li>
+</ul>
+<h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>作者对告警和处理告警的观点：</p>
+<ul>
+<li>每次处理紧急告警时都要<strong>保持紧迫感</strong>，所以紧急告警发生的频率不能太高，否则人会很疲惫</li>
+<li>每个告警都应该是<strong>可操作</strong>的</li>
+<li>每个告警都应该是通过<strong>思考</strong>去解决（原文是「智慧」），而不是通过机械性的操作或是编写脚本去处理问题</li>
+</ul>
+<p>以此为标准，设置告警规则时需要审视一下这些问题：</p>
+<ul>
+<li>它是否能够检测到当前<strong>未检测到的问题</strong>，并且是紧急、可操作的、正在发生或是即将发生的问题？</li>
+<li>它是否会在特定情况下<strong>可以忽略</strong>（原文是「良性的告警」）。在什么样的时机会出现？怎么判断是否能够忽略？，能否在编辑规则的时候避免这个问题？</li>
+<li>它是否真的能<strong>确定用户受到了影响</strong>。一些其他原因（比如有测试流量）是否会触发这个告警？是否可以过滤掉？</li>
+<li>是否需要对这个告警<strong>采取措施</strong>，必须当场处理还是可以之后再处理？</li>
+<li>当出现该问题时，是否需要联系其他人？哪些人可以解决问题？我怎么知道该找哪些人？</li>
+</ul>
+<p>当然如果都能做到未免太理想化，不过作者下面提供了一些技巧可以帮助我们更接近这个目标。</p>
+<h3 id="Monitor-for-your-users"><a href="#Monitor-for-your-users" class="headerlink" title="Monitor for your users"></a>Monitor for your users</h3><p>作者将监控分为两类，称之为<strong>「基于症状的监控」</strong>，与之相对的是<strong>「基于原因的监控」</strong>。作者认为监控的关注点应该是用户，例如用户其实并不会关心我们的 MySQL 服务器宕机了，他只关心他的查询是否失败；用户也不会关心我们的软件在反复重启，他只关心功能是否正常；同样用户也不会关心我们的推送是否失败，他只关心消息是否及时。</p>
+<p>并且用户关心的东西其实很少：</p>
+<ul>
+<li><strong>基本的可用性和正确性</strong>：没有错误、没有非预期的结果，那么就没有故障</li>
+<li><strong>延迟</strong>：当然是越快越好</li>
+<li><strong>数据正确性</strong>：用户的数据都应该是安全的，即使短时间的不可用，在恢复后也不能有任何数据问题</li>
+<li><strong>功能</strong>：用户关心所有功能都在正常工作，例如 google 会在搜索结果中返回计算器或是股票信息</li>
+</ul>
+<p>所以，数据库不可用和用户查询不可用看上去很相似，实际前者是原因，而后者是症状。当我们没有办法模拟用户的真实行为时，我们其实很难区分出这两者的区别，但是如果我们有办法，则应该去尝试关注后者。</p>
+<p><em>我个人比较推崇建设和关注端到端成功率，有些时候可能数据库频繁断连接，但是用户的程序有重试逻辑，只要最终没有报错，那么就没有任何影响。反过来，也许数据库只是延迟上升了一些，但是刚好触发了用户的超时和熔断，那么很可能会出现数据库看上去没有异常，而用户已经大面积报错了的故障。</em></p>
+<h3 id="Cause-based-alerts-are-bad-but-sometimes-necessary"><a href="#Cause-based-alerts-are-bad-but-sometimes-necessary" class="headerlink" title="Cause-based alerts are bad (but sometimes necessary)"></a>Cause-based alerts are bad (but sometimes necessary)</h3><p>为什么作者不推荐配置基于原因的告警，有以下几个理由：</p>
+<ul>
+<li><strong>我们没办法想到一个问题的所有原因</strong>，我们只能为我们已知的原因配置告警</li>
+<li>如果同时配置症状和原因的告警，就会产生<strong>多余的告警</strong>，处理多余的告警会额外浪费精力</li>
+<li><strong>并不是所有原因产生的问题都需要处理</strong>，例如单个节点不可用的故障，在一些情况可能是正常的（例如在做整个集群的滚动重启）。在另一些情况可能是非紧急的（例如在一个集群环境下，单个节点故障通常是可容忍的，也是会偶尔发生的）</li>
+</ul>
+<p>但是在一些场景下，我们也需要基于原因的告警，例如内存或是磁盘空间即将耗尽，这些问题没有症状，并且即将导致严重问题。除此之外，<strong>不推荐为能够配置症状告警的问题配置同样的原因告警</strong>。</p>
+<p><em>以前有个系统，对 uptime 配置了告警，用于监控异常退出后重启的情况。但是滚动重启时也会导致 uptime 归零，因此当时的逻辑是在滚动重启时禁用掉该告警五分钟，看上去这不是一个优雅的做法，因为依赖外部工具动态修改告警配置增加了告警规则的复杂度。也许更好的做法是直接监控异常退出和 OOM。</em></p>
+<h4 id="Alerting-from-the-spout-or-beyond"><a href="#Alerting-from-the-spout-or-beyond" class="headerlink" title="Alerting from the spout (or beyond!)"></a>Alerting from the spout (or beyond!)</h4><p>在 client/server 架构中，在客户端配置告警要优于在服务端配置告警。有以下几个原因：</p>
+<ul>
+<li><strong>客户端能够看到包含重试、以及网络延迟等信息的结果</strong>，能够更好地站在用户的角度去观察延迟和错误</li>
+<li>在一些场景中，客户端需要<strong>聚合来自多个服务端的结果</strong>，观测客户端的<strong>实际操作</strong>，可以使监控更加健壮</li>
+<li>在一些场景中，客户端可以看到更全局的视图，例如一个请求分散到几百台服务器中，每台服务器的信息都非常有限，无法形成有用的告警信息</li>
+</ul>
+<p>对很多服务来说，意味着在离用户最近的负载均衡去评估延迟和错误，这样只会在故障真正影响到用户时才会发送告警信息，也能比服务端发现更多的问题。</p>
+<p>但是也要注意将告警控制在能掌控的范围内，作者举了个例子是如果能够配置基于浏览器的告警，那么就几乎可以感知所有用户可以感知到的问题了。但是同时也会带来大量的噪音（例如用户本身的网络质量或是电脑性能），所以不太可能当做唯一依赖的来源。</p>
+<p><em>之前也遇到过同样的问题，在做分布式事务时，计算层会将一个 2pc 请求并行的发送给所有的存储层参与者，并等待所有参与者返回，因此计算层完整的 2pc 的响应时间由最慢的参与者的响应时间所决定。当某台存储节点的负载明显高于其他节点时，计算层的执行 999 线就可能和存储层的执行 999 线截然不同。</em></p>
+<p><em>前段时间我收到了一个端到端可用性直接降到 80% 的告警（配置的告警阈值是 99.9%），后来发现是因为业务的新写的逻辑没有考虑到数据库中的已有数据，产生了大量主键冲突的异常，这个异常和数据库的可用性其实没有明显关系，但是因为我们这边统一监控了 JDBC 层面的所有异常，很难区分出系统异常（例如超时、断连接等）和用户异常（例如语法错误、主键冲突）等情况。比较有意思的是业务侧没有收到任何告警，而数据库侧光看告警的内容会吓死人。</em></p>
+<h4 id="Causes-are-still-useful"><a href="#Causes-are-still-useful" class="headerlink" title="Causes are still useful"></a>Causes are still useful</h4><p>基于原因的告警仍然是有用的，它的作用是帮助我们快速的从问题的症状跳转到问题的根因。</p>
+<p>如果我们希望能够自动将症状和原因关联起来，就需要减少一些无法控制的原因告警，作者提倡使用以下方法：</p>
+<ol>
+<li>当编写一个基于原因的告警时，需要检查对应的症状是否也有相应的告警，如果没有的话，需要补上</li>
+<li><p>在每个告警中简要描述可能产生的原因，帮助处理告警的人能够快速的确认问题是否已经有确定的对应原因，例如：</p>
+ <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">TooMany500StatusCodes</span><br><span class="line">Served 10.7% 5xx results in the last 3 minutes!</span><br><span class="line">Also firing:</span><br><span class="line">        JanitorProcessNotKeepingUp</span><br><span class="line">        UserDatabaseShardDown</span><br><span class="line">        FreshnessIndexBehind</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>这里出现了 5xx 过多，可以快速的推断出最大的可能是数据库异常，而如果出现了磁盘空间不足或是页面返回空结果，则更有可能是另外两个原因。</p>
+<ol>
+<li>删除或调整其他低价值的原因告警，以减少噪音</li>
+</ol>
+<p>最后，作者提到基于原因的告警更多是和监控面板的复杂度做取舍，如果我们需要一个干净的监控面板，那么就可以配置更多的原因告警。相反如果我们已经有了一个很完善的监控面板，那么其实不需要原因告警也可以快速的定位问题。</p>
+<p><em>监控面板的复杂度也是我最头疼的问题之一，很多时候监控面板看上去很完善，但是出现问题后其实很难快速的找到某一个异常的指标，也就是从症状推到原因的效率并不高。</em></p>
+<h3 id="Tickets-Reports-and-Email"><a href="#Tickets-Reports-and-Email" class="headerlink" title="Tickets, Reports and Email"></a>Tickets, Reports and Email</h3><p>这里主要介绍如何处理一些不需要立刻处理的告警，作者称为「sub-critical alerts」，下面为了方便称为隐患，作者也提供了一些经验：</p>
+<ul>
+<li><strong>使用 Bug 或者任务跟踪系统</strong>：将多次触发的同一个告警记录在 Bug 或者任务中，需要有人负责及时的分类和关闭这些任务，并且需要防止隐患长时间没有处理而逐渐变成真正的问题</li>
+<li><strong>使用每日报告</strong>：通过一个定时的报告发送这些隐患（例如数据库磁盘空间已经达到 90%），同样需要确保一定要有人负责跟进</li>
+<li><strong>每个告警都需要使用工作流跟踪</strong>：一些过时的或者规则配置错误的告警可能不需要处理，但是也不能忽视它（作者举的例子是单独建了个 email 文件夹或者 channel 把这些告警摘出去），而是要处理掉它们</li>
+</ul>
+<p>作者想表述的重点在于，需要有一个系统能够同时满足两个目标：一定有人会对这类隐患<strong>负责</strong>，并且没有人需要为此付出<strong>高昂的成本</strong>。</p>
+<p><em>大公司的常见毛病，每天都会有乱七八糟的无用告警发来发去，而且没人在乎，想推动相关人员把这些无用告警去掉，他们又怕之后出问题了担责任，从没有认真思考过如何改善这个问题。</em></p>
+<h3 id="Playbooks"><a href="#Playbooks" class="headerlink" title="Playbooks"></a>Playbooks</h3><p>Playbook 是告警系统中的另一个重要组成部分，作者建议给每一个告警项都编写对应的 Playbook，进一步解释告警的含义以及如何解决。</p>
+<p>一般来说每个 Playbook 会是一个详细的流程图，<strong>大部分的篇幅是介绍哪里可能出现问题，少部分的篇幅介绍如何修复它</strong>。此外还有一些情况是这个问题超出控制，必须寻求人工协助。因为一般篇幅不是很多，记录在 wiki 中是一个好的选择。</p>
+<p><em>这里作者介绍的信息很少，可能是因为 google sre 都太牛逼了没什么需要人工处理的问题…</em></p>
+<h3 id="Tracking-amp-Accountability"><a href="#Tracking-amp-Accountability" class="headerlink" title="Tracking &amp; Accountability"></a>Tracking &amp; Accountability</h3><p>如果一个告警正在触发，但是有人说“我看过了，没什么问题”，这表明我们需要重新调整这个告警的规则，或是干脆将它删掉。准确率低于 50% 的告警可以认为是坏掉的，及时是 10% 的误报也需要考虑是否能进行调整。</p>
+<p>需要有个系统（例如<strong>每周审查所有告警，或是每个季度统计告警数据</strong>）帮助我们了解系统的现状，以及分析一些告警在不同人之间转移时出现的问题。</p>
+<h3 id="You’re-being-naive"><a href="#You’re-being-naive" class="headerlink" title="You’re being naïve!"></a>You’re being naïve!</h3><p>理想很丰满，但是现实很骨感，一些可能会出现的情况将会违反上述的规则，但仍然是合理的：</p>
+<ul>
+<li><strong>一些已知的问题混杂在噪音之中</strong>：如果系统配置了一个 99.99% 的可用性告警（很明显这是一个基于症状的告警），但是会有一个常见的问题导致 0.001% 请求失败，这个问题会被掩盖在噪音之中。此时可以不依赖基于症状的告警，而是单独为它配置一个基于原因的告警</li>
+<li><strong>无法在入口处进行监控，因为无法区分出不同的特征</strong>：服务端对不同服务的可用性和延迟的标准是不同的，例如信用卡支付和浏览购物车相比，可用性要求要高得多。此时在负载均衡处配置统一的告警规则肯定是行不通的，应该下沉到能够区分出这些特征的位置配置不同的告警</li>
+<li><strong>当症状出现时一切都晚了</strong>：一些紧急的告警，可能在找到跟因前就已经为时已晚了，因此也需要一个对应的不是很紧急的隐患。例如磁盘空间同时会有「当前用量大于 80% 且按照最近 1 小时的用量估算 4 小时内就会用满」的紧急告警和「当前用量大于 90% 且按照最近 1 天的用量估算 4 天内就会用满」的非紧急隐患。其中后者就可以解决大部分问题</li>
+<li><strong>告警比试图检测的问题还要复杂</strong>：我们的目标是构建简单、健壮、能够自我保护的系统，因此告警规则也不应该过于复杂</li>
+</ul>
+<p><em>个人很赞同最后一点，不要通过复杂的告警规则或是人肉运维去解决系统设计问题，很多问题的发现和降级都应该在系统内部完成。</em></p>
+</div></article></div></main><footer><div class="paginator"><a href="/2020-year-end-review/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+var disqus_identifier = 'my-philosophy-on-alerting/';
+var disqus_title = '[笔记] My Philosophy on Alerting';
+var disqus_url = 'http://www.scienjus.com/my-philosophy-on-alerting/';
+(function() {
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();</script><script id="dsq-count-scr" src="//scienjus.disqus.com/count.js" async></script><div class="copyright"><p>© 2015 - 2021 <a href="http://www.scienjus.com">ScienJus</a>, powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and <a href="https://github.com/pinggod/hexo-theme-apollo" target="_blank">hexo-theme-apollo</a>.</p></div></footer></div><script async src="//cdn.bootcss.com/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML" integrity="sha384-crwIf/BuaWM9rM65iM+dWFldgQ1Un8jWZMuh3puxb8TOY9+linwLoI7ZHZT+aekW" crossorigin="anonymous"></script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;e=o.createElement(i);r=o.getElementsByTagName(i)[0];e.src='//www.google-analytics.com/analytics.js';r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));ga('create',"UA-168066892-1",'auto');ga('send','pageview');</script><script>var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?47cf199e59a26235dadf455975b8b67f";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();</script></body></html>
