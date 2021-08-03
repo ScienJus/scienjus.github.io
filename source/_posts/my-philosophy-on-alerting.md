@@ -1,7 +1,7 @@
 ---
-title: [笔记] My Philosophy on Alerting
-date: 2021-08-03 19:28:10
-permalink: my-philosophy-on-alerting
+title: '[笔记] My Philosophy on Alerting'
+date: '2021-08-03 19:28:10'
+permalink: 'my-philosophy-on-alerting'
 ---
 
 因为最近被各种乱七八糟的告警的搞得很烦，光吐槽啥也不做也不太好，所以在团队内部分享了下这篇文章。
@@ -110,7 +110,7 @@ Also firing:
         UserDatabaseShardDown
         FreshnessIndexBehind        
     ```
-这里出现了 5xx 过多，可以快速的推断出最大的可能是数据库异常，而如果出现了磁盘空间不足或是页面返回空结果，则更有可能是另外两个原因。
+    这里出现了 5xx 过多，可以快速的推断出最大的可能是数据库异常，而如果出现了磁盘空间不足或是页面返回空结果，则更有可能是另外两个原因。
 
 3. 删除或调整其他低价值的原因告警，以减少噪音
 
