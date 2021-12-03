@@ -1,5 +1,5 @@
 ---
-title: WiscKey 论文阅读笔记
+title: '[论文笔记] WiscKey: Separating Keys from Values in SSD-Conscious Storage'
 date: 2020-07-13 22:02:04
 permalink: wisckey
 ---
