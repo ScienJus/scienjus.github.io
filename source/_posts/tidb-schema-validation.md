@@ -6,6 +6,8 @@ permalink: 'tidb-schema-validation'
 
 这篇笔记主要记录 tidb 在 online schema change 实现中遇到的索引数据不一致问题，以及如何在同步提交和异步提交下通过检查 schema 版本避免该问题。
 
+<!--more-->
+
 ### Online Schema Change
 
 参考论文 [Online, Asynchronous Schema Change in F1][1]，本文就不详细介绍了。
@@ -194,6 +196,8 @@ func (w *worker) runReorgJob(t *meta.Meta, reorgInfo *reorgInfo, tblInfo *model.
 
 我不太清楚该如何系统性的描述整个方案的正确性，因此下面的内容是以 Q&A 的方式进行记录。
 
+以下部分疑惑请教了上述 PR 的原作者 [@sticnarf][6]，感谢他的解答。
+
 #### Q：SafeWindow = 2s 是否有特殊含义，还是只是一个经验值？
 
 最开始我以为设置的 2s 是依赖了 schema lease 的实现，即每个操作都会等 2 * leasa 的时间。后来想到 tidb 支持在 pd 上注册和监听 schema 版本变更以加速推进 ddl，实际并没有这个保证（并且 lease time 是可配的，肯定不会在代码里写死 2s）。
@@ -222,7 +226,7 @@ func (w *worker) runReorgJob(t *meta.Meta, reorgInfo *reorgInfo, tblInfo *model.
 有两处地方会受到始终漂移的影响：
 
 - 计算 current ts 时使用了当前时间和 start time 的差值，如果 sql 发生时钟漂移会导致这个值可能比预期更大，也就会使 max commit ts 比预期更大
-- 咨询 @sticnarf 后得知，如果 pd 发生了时钟漂移可能会导致 reorg 时获取的 reorg read ts 比预期更小
+- 请教 @sticnarf 后得知，如果 pd 发生了时钟漂移可能会导致 reorg 时获取的 reorg read ts 比预期更小
 
 只要发生了上述任意一种场景，都会导致 max commit ts < reorg read ts 这个保证不成立，也就有可能导致索引丢失。
 
@@ -256,4 +260,5 @@ func (w *worker) runReorgJob(t *meta.Meta, reorgInfo *reorgInfo, tblInfo *model.
 [3]: https://ericfu.me/timestamp-in-distributed-trans/
 [4]: https://github.com/pingcap/tidb/pull/20186
 [5]: https://github.com/pingcap/tidb/pull/20550
+[6]: https://github.com/sticnarf
 
