@@ -65,7 +65,7 @@
 <p>以下部分疑惑请教了上述 PR 的原作者 <a href="https://github.com/sticnarf" target="_blank" rel="external">@sticnarf</a>，感谢他的解答。</p>
 <h4 id="Q：SafeWindow-2s-是否有特殊含义，还是只是一个经验值？"><a href="#Q：SafeWindow-2s-是否有特殊含义，还是只是一个经验值？" class="headerlink" title="Q：SafeWindow = 2s 是否有特殊含义，还是只是一个经验值？"></a>Q：SafeWindow = 2s 是否有特殊含义，还是只是一个经验值？</h4><p>最开始我以为设置的 2s 是依赖了 schema lease 的实现，即每个操作都会等 2 * leasa 的时间。后来想到 tidb 支持在 pd 上注册和监听 schema 版本变更以加速推进 ddl，实际并没有这个保证（并且 lease time 是可配的，肯定不会在代码里写死 2s）。</p>
 <p>所以这应该是一个经验值，认为异步提交的事务在 prewrite 阶段基本都会在 2s 内完成，并且代码中动态计算了 current ts 而不是直接用 start ts 也是为了尽量减少事务时间的限制，对长事务更加友好。</p>
-<h4 id="Q：为什么-Reorg-需要等待-SafeWindow（不考虑时钟漂移的情况下）？"><a href="#Q：为什么-Reorg-需要等待-SafeWindow（不考虑时钟漂移的情况下）？" class="headerlink" title="Q：为什么 Reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？"></a>Q：为什么 Reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？</h4><p>在异步提交下 Reorg 出现问题的时序是确定的：</p>
+<h4 id="Q：为什么-reorg-需要等待-SafeWindow（不考虑时钟漂移的情况下）？"><a href="#Q：为什么-reorg-需要等待-SafeWindow（不考虑时钟漂移的情况下）？" class="headerlink" title="Q：为什么 reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？"></a>Q：为什么 reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？</h4><p>在异步提交下 reorg 出现问题的时序是确定的：</p>
 <ul>
 <li>一个 delete-only 的事务完成 preprocess，准备提交</li>
 <li>事务计算出 current ts</li>
@@ -76,6 +76,7 @@
 </ul>
 <p>根据异步提交的实现，reorg 扫描时会将 tikv 对应的 max ts 推进到 reorg read ts，而之后 prewrite 时事务 commit ts 的计算区间即为 [reorg read ts, max commit ts)，此时如果需要拦截住所有事务提交，就需要让 max commit ts 小于等于 reorg read ts。</p>
 <p>而从上面的时序中可以得到 reorg read ts 一定大于 current ts，那么 reorg read ts + 2s 则一定大于 max commit ts，基于此使得 reorg 在执行前也需要等待 2s。</p>
+<p><img src="/uploads/16395431456913.jpg" alt=""></p>
 <p>注意上述的前提都是不考虑时钟漂移的情况下。</p>
 <h4 id="Q：为什么-reorg-需要额外等待时钟漂移？"><a href="#Q：为什么-reorg-需要额外等待时钟漂移？" class="headerlink" title="Q：为什么 reorg 需要额外等待时钟漂移？"></a>Q：为什么 reorg 需要额外等待时钟漂移？</h4><p>有两处地方会受到始终漂移的影响：</p>
 <ul>
@@ -102,7 +103,7 @@
 <li><a href="https://github.com/pingcap/tidb/pull/20186" target="_blank" rel="external">txn: add schema version check for async commit recovery #20186</a></li>
 <li><a href="https://github.com/pingcap/tidb/pull/20550" target="_blank" rel="external">ddl, tikv: add delay during AddIndex DDL and remove schema check for async commit #20550</a></li>
 </ul>
-</div></article></div></main><footer><div class="paginator"><a href="/diffkv/" class="next">下一篇</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
+</div></article></div></main><footer><div class="paginator"><a href="/diffkv/" class="next">NEXT</a></div><div id="disqus_thread"></div><script>var disqus_shortname = 'scienjus';
 var disqus_identifier = 'tidb-schema-validation/';
 var disqus_title = '[笔记] TiDB 的 Schema 版本检查';
 var disqus_url = 'http://www.scienjus.com/tidb-schema-validation/';
