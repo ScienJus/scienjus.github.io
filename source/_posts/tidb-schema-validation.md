@@ -204,9 +204,9 @@ func (w *worker) runReorgJob(t *meta.Meta, reorgInfo *reorgInfo, tblInfo *model.
 
 所以这应该是一个经验值，认为异步提交的事务在 prewrite 阶段基本都会在 2s 内完成，并且代码中动态计算了 current ts 而不是直接用 start ts 也是为了尽量减少事务时间的限制，对长事务更加友好。
 
-#### Q：为什么 Reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？
+#### Q：为什么 reorg 需要等待 SafeWindow（不考虑时钟漂移的情况下）？
 
-在异步提交下 Reorg 出现问题的时序是确定的：
+在异步提交下 reorg 出现问题的时序是确定的：
 
 - 一个 delete-only 的事务完成 preprocess，准备提交
 - 事务计算出 current ts
@@ -218,6 +218,8 @@ func (w *worker) runReorgJob(t *meta.Meta, reorgInfo *reorgInfo, tblInfo *model.
 根据异步提交的实现，reorg 扫描时会将 tikv 对应的 max ts 推进到 reorg read ts，而之后 prewrite 时事务 commit ts 的计算区间即为 [reorg read ts, max commit ts)，此时如果需要拦截住所有事务提交，就需要让 max commit ts 小于等于 reorg read ts。
 
 而从上面的时序中可以得到 reorg read ts 一定大于 current ts，那么 reorg read ts + 2s 则一定大于 max commit ts，基于此使得 reorg 在执行前也需要等待 2s。
+
+![](/uploads/16395431456913.jpg)
 
 注意上述的前提都是不考虑时钟漂移的情况下。
 
